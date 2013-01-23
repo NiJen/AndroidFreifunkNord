@@ -24,7 +24,7 @@ public class Nodes {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		mylist.clear();
 		try {
 			JSONArray  nodes = jArray.getJSONArray("nodes");
 			 JSONObject e = nodes.getJSONObject(0);

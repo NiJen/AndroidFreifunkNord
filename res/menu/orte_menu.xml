@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item android:id="@+id/orteHamburg"
+              android:title="Hamburg" />
+        <item android:id="@+id/orteKiel"
+              android:title="Kiel" />
+        <item android:id="@+id/orteLuebeck"
+              android:title="Lübeck" />
+    </group>
+</menu>

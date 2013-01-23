@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory
+    	android:title="Freifunk Städte">
+        <ListPreference
+            android:title="Freifunk Städte"
+            android:summary="Auswahl der Freifunk Städte"
+            android:key="ffstaedteValues"
+            android:defaultValue="digiGreen"
+            android:entries="@array/ffstaedte"
+            android:entryValues="@array/ffstaedteValues" />
+	</PreferenceCategory>
+</PreferenceScreen>

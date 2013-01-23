@@ -2,11 +2,12 @@
 <resources>
 
     <string name="app_name">Freifunk Nord</string>
+    <string name="WWW">Website</string>
+    <string name="www">https://github.com/NiJen/</string>
+    <string name="feedback">Feedback</string>
+    <string name="email">nijen@gmx.eu</string>
     <string name="menu_settings">Settings</string>
-    <string-array name="FFOrte">
-        <item stadt="Hamburg" >Hamburg</item>
-        <item stadt="Lübeck">http://188.138.99.158/mesh/nodes.json</item>
-        <item stadt="Kiel">http://freifunk.in-kiel.de/ffmap/nodes.json</item>
-    </string-array>
+
+    <string name="title_activity_preference">Settings</string>
 
 </resources>

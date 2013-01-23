@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+	<string-array name="ffstaedte">
+	    <item name="Hamburg">Hamburg</item>
+	    <item name="Lübeck">Lübeck</item>
+	    <item name="Kiel">Kiel</item>
+	</string-array>
+	<string-array name="ffstaedteValues">
+	    <item name="Hamburg">http://192.168.100.2/~Nils/nodes.json</item>
+		<item name="Lübeck">http://188.138.99.158/mesh/nodes.json</item>    
+		<item name="Kiel">http://freifunk.in-kiel.de/ffmap/nodes.json</item>
+	</string-array>
+</resources>
