@@ -28,7 +28,7 @@ public class FreifunkNord extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "null"));
+    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "http://freifunk-gw01.hamburg.ccc.de/ffhhmap/nodes.json"));
     	HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
     	task.execute();
     }
@@ -46,18 +46,21 @@ public class FreifunkNord extends Activity {
 		setContentView(R.layout.freifunkhh_main);
 		TextView StatsTV = (TextView) findViewById(R.id.textViewStats);
 		//TODO Besser auslesen lassen
-		String ort =null;
-		String[] ortetest = getResources().getStringArray(R.array.ffstaedteValues);
-		if (sharedPrefs.getString("ffstaedteValues", null).equals(ortetest[0])){
-			ort ="Hamburg";
-		}
-		else if (sharedPrefs.getString("ffstaedteValues", null).equals(ortetest[1])){
-			ort ="Lübeck";
+		String ort = "Hamburg";
+		try{
+			String[] ortetest = getResources().getStringArray(R.array.ffstaedteValues);
+			if (sharedPrefs.getString("ffstaedteValues", "").equals(ortetest[0])){
+				ort ="Hamburg";
 			}
-		else if (sharedPrefs.getString("ffstaedteValues", null).equals(ortetest[2])){
-			ort ="Kiel";
-		}
+			else if (sharedPrefs.getString("ffstaedteValues", "").equals(ortetest[1])){
+				ort ="Lübeck";
+			}
+			else if (sharedPrefs.getString("ffstaedteValues", "").equals(ortetest[2])){
+				ort ="Kiel";
+			}
+		}finally{};
 		//ENDE todo 
+		
 		StatsTV.setText(  "Knoten: " + String.valueOf(Nodes.intKnoten) + "\t" + "\t"
 						+ "Clients: " + String.valueOf(Nodes.intClients) + "\t" + "\t"
 						+ "Gateways: " + String.valueOf(Nodes.intGateways) + "\t" + "\t"
