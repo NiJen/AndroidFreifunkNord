@@ -18,6 +18,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class FreifunkNord extends Activity {
     /** Called when the activity is first created. */
@@ -26,9 +27,8 @@ public class FreifunkNord extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
-        //setContentView(R.layout.activity_json_client);
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "http://192.168.100.2/~Nils/nodes.json"));
+    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "null"));
     	HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
     	task.execute();
     }
@@ -36,7 +36,7 @@ public class FreifunkNord extends Activity {
 
    public void  updateList(){
 	   SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-   	   url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "http://192.168.100.2/~nils/nodes.json"));
+   	   url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "null"));
   	   HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
   	   task.execute();	 
    }
@@ -47,19 +47,19 @@ public class FreifunkNord extends Activity {
 		TextView StatsTV = (TextView) findViewById(R.id.textViewStats);
 		//TODO Besser auslesen lassen
 		String ort =null;
-		if (sharedPrefs.getString("ffstaedteValues", null).equals("http://192.168.100.2/~Nils/nodes.json")){
+		String[] ortetest = getResources().getStringArray(R.array.ffstaedteValues);
+		if (sharedPrefs.getString("ffstaedteValues", null).equals(ortetest[0])){
 			ort ="Hamburg";
 		}
-		else if (sharedPrefs.getString("ffstaedteValues", null).equals("http://188.138.99.158/mesh/nodes.json")){
+		else if (sharedPrefs.getString("ffstaedteValues", null).equals(ortetest[1])){
 			ort ="Lübeck";
 			}
-		else if (sharedPrefs.getString("ffstaedteValues", null).equals("http://freifunk.in-kiel.de/ffmap/nodes.json")){
+		else if (sharedPrefs.getString("ffstaedteValues", null).equals(ortetest[2])){
 			ort ="Kiel";
 		}
 		//ENDE todo 
-		StatsTV.setText( "Knoten: " + String.valueOf(Nodes.intKnoten) + "\t" + "\t"
+		StatsTV.setText(  "Knoten: " + String.valueOf(Nodes.intKnoten) + "\t" + "\t"
 						+ "Clients: " + String.valueOf(Nodes.intClients) + "\t" + "\t"
-					//	+ "Online: " + String.valueOf(NodesHH.intOnline) + "\t" + "\t"
 						+ "Gateways: " + String.valueOf(Nodes.intGateways) + "\t" + "\t"
 						+ ort
 						);
@@ -96,14 +96,10 @@ public class FreifunkNord extends Activity {
         	startActivity(viewIntent);  
             return true;
         case R.id.feedback:
-        	/* Create the Intent */
         	final Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
-
-        	/* Fill it with Data */
         	emailIntent.setType("plain/text");
         	emailIntent.putExtra(android.content.Intent.EXTRA_EMAIL, new String[]{this.getString(R.string.email)});
         	emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, this.getString(R.string.feedback)+" "+this.getString(R.string.app_name));
-//        	emailIntent.putExtra(android.content.Intent.EXTRA_TEXT, "Text");
         	startActivity(emailIntent); 
 	    default:
 	        return super.onOptionsItemSelected(item);

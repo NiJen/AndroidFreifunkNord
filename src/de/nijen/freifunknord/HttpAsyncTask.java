@@ -20,7 +20,6 @@ import org.apache.http.params.HttpParams;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.view.Display;
 import android.widget.Toast;
 
 public class HttpAsyncTask extends AsyncTask<String, Integer, String> {
@@ -81,7 +80,7 @@ private ProgressDialog dialog;
 	@Override
 	protected void onPreExecute() {
 		dialog = new ProgressDialog(ajt, ProgressDialog.STYLE_SPINNER);
-		dialog.setTitle("Getting nodes");
+		dialog.setTitle("Getting data");
 		dialog.setMessage("Please, wait...");
 		dialog.show();
 	}

@@ -6,7 +6,7 @@
 	    <item name="Kiel">Kiel</item>
 	</string-array>
 	<string-array name="ffstaedteValues">
-	    <item name="Hamburg">http://192.168.100.2/~Nils/nodes.json</item>
+	    <item name="Hamburg">http://freifunk-gw01.hamburg.ccc.de/ffhhmap/nodes.json</item>
 		<item name="Lübeck">http://188.138.99.158/mesh/nodes.json</item>    
 		<item name="Kiel">http://freifunk.in-kiel.de/ffmap/nodes.json</item>
 	</string-array>
