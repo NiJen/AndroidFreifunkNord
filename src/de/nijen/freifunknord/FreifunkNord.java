@@ -18,7 +18,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class FreifunkNord extends Activity {
     /** Called when the activity is first created. */
