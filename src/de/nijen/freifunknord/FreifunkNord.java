@@ -27,7 +27,8 @@ public class FreifunkNord extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState); 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "http://freifunk-gw01.hamburg.ccc.de/ffhhmap/nodes.json"));
+        String default_url = getString(R.string.nodes_url_hh);
+    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", default_url));
     	HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
     	task.execute();
     }
@@ -35,7 +36,8 @@ public class FreifunkNord extends Activity {
 
    public void  updateList(){
 	   SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-   	   url = Uri.parse(sharedPrefs.getString("ffstaedteValues", "null"));
+	   String default_url = getString(R.string.nodes_url_hh);
+	   url = Uri.parse(sharedPrefs.getString("ffstaedteValues", default_url));
   	   HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
   	   task.execute();	 
    }
