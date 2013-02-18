@@ -10,4 +10,7 @@
 
     <string name="title_activity_preference">Settings</string>
 
+    <string name="nodes_url_hh">http://freifunk-gw01.hamburg.ccc.de/ffhhmap/nodes.json</string>
+    <string name="nodes_url_hl">http://188.138.99.158/mesh/nodes.json</string>
+    <string name="nodes_url_ki">http://freifunk.in-kiel.de/ffmap/nodes.json</string>
 </resources>
