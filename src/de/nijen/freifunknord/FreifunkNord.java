@@ -89,6 +89,11 @@ public class FreifunkNord extends Activity {
 	    case R.id.menu_updatelist:
 	    	updateList();
 	        return true;
+	    case R.id.map_view:
+	    	Intent map_view = new Intent(this,
+                    MapView_UI.class);
+	    	startActivity(map_view);
+	        return true;
 	    case R.id.menu_settings:
 	    	Intent settingsActivity = new Intent(getBaseContext(),
                     Preference.class);

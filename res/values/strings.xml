@@ -7,8 +7,9 @@
     <string name="feedback">Feedback</string>
     <string name="email">nijen@gmx.eu</string>
     <string name="menu_settings">Settings</string>
-
     <string name="title_activity_preference">Settings</string>
+    <string name="title_activity_map_view">Map View</string>
+    <string name="maps_api_key">6B:A5:95:C6:ED:71:10:4F:70:4C:E9:C9:4D:C7:AE:B2</string>
 
     <string name="nodes_url_hh">http://freifunk-gw01.hamburg.ccc.de/ffhhmap/nodes.json</string>
     <string name="nodes_url_hl">http://188.138.99.158/mesh/nodes.json</string>

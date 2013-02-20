@@ -6,9 +6,16 @@
         android:showAsAction="never"
         android:icon="@android:drawable/ic_menu_preferences" 
         android:title="@string/menu_settings"/>
+    <item
+        android:id="@+id/map_view"
+        android:orderInCategory="99"
+        android:showAsAction="ifRoom"
+        android:icon="@android:drawable/ic_menu_mapmode" 
+        android:title="@string/title_activity_map_view"/>
     
     <item
         android:id="@+id/menu_updatelist"
+        android:orderInCategory="100"
         android:showAsAction="ifRoom"
         android:icon="@drawable/ic_menu_refresh"
         android:title="Liste aktualisieren"/>
