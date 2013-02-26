@@ -5,5 +5,5 @@
  android:layout_width="fill_parent"
  android:layout_height="fill_parent"
  android:clickable="true"
- android:apiKey="0eVVez_rQm0417H5ym0e2MUDsb5JuuSxk90Dshw"
+ android:apiKey="@string/maps_api_key"
 />

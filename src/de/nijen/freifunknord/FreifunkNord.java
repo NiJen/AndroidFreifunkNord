@@ -2,9 +2,7 @@ package de.nijen.freifunknord;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import de.nijen.freifunknord.R;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
