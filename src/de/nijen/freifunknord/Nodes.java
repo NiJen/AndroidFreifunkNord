@@ -57,9 +57,6 @@ public class Nodes {
 				 
 				 //Auslesen der Nodes für die Liste
 				 HashMap<String, String> map = new HashMap<String, String>();
-				 map.put("id", e.getString("id"));
-				 map.put("name", e.getString("name"));
-				 map.put("geo", e.getString("geo"));
 				 
 				 JSONObject jsonFlags = e.getJSONObject("flags");
 				 if(jsonFlags.getString("online").contentEquals("true")){
@@ -67,21 +64,19 @@ public class Nodes {
 					 intOnline += 1;
 					 if(jsonFlags.getString("client").contentEquals("true")){
 						 intClients += 1;
+					 }else{
+						 map.put("id", e.getString("id"));
+						 map.put("name", e.getString("name"));
+						 map.put("geo", e.getString("geo"));
+						 map.put("online",online);
+						 
+						 mylist.add(map);
 					 }
-				 }
-				 else{
-					 online = "offline";
 				 }
 				 
 				 if(jsonFlags.getString("gateway").contentEquals("true")){
 					 intGateways += 1;
-				 }
-				 				 
-				 map.put("online",online); 			 
-				 mylist.add(map);
-				 
-				 
-				 
+				 }	 				  
 			 }
 			 intKnoten = intOnline - intClients  ;
 			 intClients = intClients - intGateways - intKnoten;
@@ -90,7 +85,5 @@ public class Nodes {
 			e.printStackTrace();
 		}
 		return mylist;
-	}
-
-		
+	}		
 }

@@ -3,8 +3,12 @@ package de.nijen.freifunknord;
 import java.util.List;
 
 import android.app.ActionBar.LayoutParams;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ImageView;
 import de.nijen.freifunknord.R;
 import com.google.android.maps.GeoPoint;
@@ -16,7 +20,8 @@ import com.google.android.maps.OverlayItem;
 
 
 public class MapView_UI extends MapActivity {
-
+	List<Overlay> mapOverlays;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,10 +66,10 @@ public class MapView_UI extends MapActivity {
 		 
 		 mapOverlays.add(itemizedoverlay);
 		 }
+	
 		 @Override
 		 protected boolean isRouteDisplayed()
 		 {
 		 return false;
-		 }
-		 
+		 } 
 }
