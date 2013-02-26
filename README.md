@@ -5,6 +5,6 @@ Diese App zeigt die Daten vom Knotengraph der Städte Lübeck, Kiel und Hamburg 
 
 Weitere Features sind geplant wie zum Beispiel:
 
-+ Kartenansicht
++ Kartenansicht (fertig)
 + Zum nächsten Knoten führen lassen
 + Beim Draufklicken mehr Infos bekommen zum Node

@@ -1,14 +1,9 @@
 package de.nijen.freifunknord;
 
 import java.util.List;
-
 import android.app.ActionBar.LayoutParams;
-import android.content.Intent;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import de.nijen.freifunknord.R;
 import com.google.android.maps.GeoPoint;
@@ -20,7 +15,6 @@ import com.google.android.maps.OverlayItem;
 
 
 public class MapView_UI extends MapActivity {
-	List<Overlay> mapOverlays;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -42,14 +36,14 @@ public class MapView_UI extends MapActivity {
 
 			 MapView.LayoutParams mapMarkerParams = new MapView.LayoutParams( LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, pointGPS, MapView.LayoutParams.CENTER ); 
 			 ImageView mapMarker = new ImageView(getApplicationContext()); 
-			 mapMarker.setImageResource(android.R.drawable.ic_menu_mylocation);//ic_menu_refresh); 
+			 mapMarker.setImageResource(android.R.drawable.ic_menu_mylocation); 
 			 mapView.addView(mapMarker, mapMarkerParams);
 		 }
 		 
 		 //Nodes auf der Karte ausgeben
 		 List<Overlay> mapOverlays = mapView.getOverlays();
 		 Drawable drawable = this.getResources().getDrawable(R.drawable.ic_launcher);
-		 Map_ItemizedOverlay itemizedoverlay = new Map_ItemizedOverlay(drawable,this);
+		 HelloItemizedOverlay itemizedoverlay = new HelloItemizedOverlay(drawable,this);
 		 
 		 for(int i=0;i < Nodes.geolist.size(); i++){
 			 String name = Nodes.geolist.get(i).get("name");
@@ -58,7 +52,7 @@ public class MapView_UI extends MapActivity {
 			 
 			 
 			 GeoPoint point = new GeoPoint((int) (geonord * 1e6),(int) (geoost * 1e6));
-			 OverlayItem overlayitem = new OverlayItem( point, "Node: " + name ,"Route hierher");
+			 OverlayItem overlayitem = new OverlayItem( point, "Node" , name );
 			 
 			 itemizedoverlay.addOverlay(overlayitem);
 			 
