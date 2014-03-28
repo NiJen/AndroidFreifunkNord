@@ -1,0 +1,69 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.9.+'
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'android'
+
+dependencies {
+    compile 'com.google.android.gms:play-services:4.+'
+    compile 'com.android.support:appcompat-v7:+'
+    compile 'com.android.support:support-v13:+'
+}
+
+
+android {
+    buildToolsVersion '19.0.3'
+    compileSdkVersion 18
+
+    signingConfigs {
+
+        release {
+            project.ext.loadSign = true
+        }
+    }
+
+    buildTypes {
+        release {
+            runProguard true
+            proguardFile getDefaultProguardFile('proguard-project.txt')
+            debuggable true
+            jniDebugBuild true
+            signingConfig signingConfigs.release
+        }
+    }
+
+    def propsFile = rootProject.file('keystore.properties')
+
+    def props = new Properties()
+    props.load(new FileInputStream(propsFile))
+
+    def configName = 'release'
+    if (android.signingConfigs.hasProperty(configName)) {
+        android.signingConfigs[configName].storeFile = file(props['storeFile'])
+        android.signingConfigs[configName].storePassword = props['storePassword']
+        android.signingConfigs[configName].keyAlias = props['keyAlias']
+        android.signingConfigs[configName].keyPassword = props['keyPassword']
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res']
+        }
+    }
+}
