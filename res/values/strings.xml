@@ -14,4 +14,5 @@
     <string name="nodes_url_hh">http://graph.hamburg.freifunk.net/nodes.json</string>
     <string name="nodes_url_hl">http://188.138.99.158/mesh/nodes.json</string>
     <string name="nodes_url_ki">http://freifunk.in-kiel.de/ffmap/nodes.json</string>
+    <string name="nodes_url_pb">http://map.paderborn.freifunk.net/nodes.json</string>
 </resources>
