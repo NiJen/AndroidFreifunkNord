@@ -1,69 +1,56 @@
 package de.nijen.freifunknord;
 
-import java.util.List;
-import android.app.ActionBar.LayoutParams;
-import android.graphics.drawable.Drawable;
+import android.app.Activity;
+import android.location.Location;
 import android.os.Bundle;
-import android.widget.ImageView;
-import de.nijen.freifunknord.R;
-import com.google.android.maps.GeoPoint;
-import com.google.android.maps.MapActivity;
-import com.google.android.maps.MapController;
-import com.google.android.maps.MapView;
-import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapView_UI extends MapActivity {
-	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_map_view);
+public class MapView_UI extends Activity {
 
-		MapView mapView = (MapView) findViewById(R.id.mapview);
-		 mapView.setBuiltInZoomControls(true);
-		 
-		 //Standort bestimmen
-		 final MapController mapControl = mapView.getController();
-		 mapControl.setZoom(16);
-		 
-		 LocationGPS gps = new LocationGPS(this);
-		 if(gps.canGetLocation()){
-			 GeoPoint pointGPS = new GeoPoint((int) ((gps.getLatitude())*1e6), (int) (( gps.getLongitude())*1e6));
-		 
-			 mapControl.setCenter(pointGPS);
+    private void centerMapOnMyLocation(GoogleMap map) {
 
-			 MapView.LayoutParams mapMarkerParams = new MapView.LayoutParams( LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, pointGPS, MapView.LayoutParams.CENTER ); 
-			 ImageView mapMarker = new ImageView(getApplicationContext()); 
-			 mapMarker.setImageResource(android.R.drawable.ic_menu_mylocation); 
-			 mapView.addView(mapMarker, mapMarkerParams);
-		 }
-		 
-		 //Nodes auf der Karte ausgeben
-		 List<Overlay> mapOverlays = mapView.getOverlays();
-		 Drawable drawable = this.getResources().getDrawable(R.drawable.ic_launcher);
-		 HelloItemizedOverlay itemizedoverlay = new HelloItemizedOverlay(drawable,this);
-		 
-		 for(int i=0;i < Nodes.geolist.size(); i++){
-			 String name = Nodes.geolist.get(i).get("name");
-			 double geonord = Double.valueOf( Nodes.geolist.get(i).get("geoNord"));
-			 double geoost  = Double.valueOf( Nodes.geolist.get(i).get("geoOst"));
-			 
-			 
-			 GeoPoint point = new GeoPoint((int) (geonord * 1e6),(int) (geoost * 1e6));
-			 OverlayItem overlayitem = new OverlayItem( point, "Node" , name );
-			 
-			 itemizedoverlay.addOverlay(overlayitem);
-			 
-		 }
-		 
-		 mapOverlays.add(itemizedoverlay);
-		 }
-	
-		 @Override
-		 protected boolean isRouteDisplayed()
-		 {
-		 return false;
-		 } 
+        map.setMyLocationEnabled(true);
+
+        Location location = map.getMyLocation();
+
+        if (location != null) {
+            LatLng myLocation = new LatLng(location.getLatitude(),
+                    location.getLongitude());
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(myLocation,
+                    15));
+
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_map_view);
+
+        // Get a handle to the Map Fragment
+        GoogleMap map = ((MapFragment) getFragmentManager()
+                .findFragmentById(R.id.map)).getMap();
+
+        centerMapOnMyLocation(map);
+
+        //Nodes auf der Karte ausgeben
+        for (int i = 0; i < Nodes.geolist.size(); i++) {
+            String name = Nodes.geolist.get(i).get("name");
+            double geonord = Double.valueOf(Nodes.geolist.get(i).get("geoNord"));
+            double geoost = Double.valueOf(Nodes.geolist.get(i).get("geoOst"));
+
+            LatLng point = new LatLng(geonord, geoost);
+            System.out.println("Added " + name + point);
+            map.addMarker(new MarkerOptions()
+                    .title(name)
+                    .snippet("FF-Node")
+                    .position(point));
+
+        }
+    }
 }

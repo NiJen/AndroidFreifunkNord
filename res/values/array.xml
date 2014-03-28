@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
-	<string-array name="ffstaedte">
-	    <item name="Hamburg">Hamburg</item>
-	    <item name="Lübeck">Lübeck</item>
-	    <item name="Kiel">Kiel</item>
-	</string-array>
-	<string-array name="ffstaedteValues">
-	    <item name="Hamburg">@string/nodes_url_hh</item>
+<resources>
+    <string-array name="staedte">
+        <item name="Hamburg">@string/nodes_url_hh</item>
 		<item name="Lübeck">@string/nodes_url_hl</item>
 		<item name="Kiel">@string/nodes_url_ki</item>
-	</string-array>
+        <item name="Paderborn">@string/nodes_url_pb</item>
+    </string-array>
 </resources>

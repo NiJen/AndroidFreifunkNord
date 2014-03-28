@@ -27,3 +27,8 @@ proguard/
 *.ipr
 *.iws
 .idea/
+
+
+# Keystores and Properties
+*.keystore
+keystore.properties
