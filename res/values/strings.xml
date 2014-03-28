@@ -9,10 +9,10 @@
     <string name="menu_settings">Settings</string>
     <string name="title_activity_preference">Settings</string>
     <string name="title_activity_map_view">Knoten Karte</string>
-    <string name="maps_api_key">0eVVez_rQm0417H5ym0e2MUDsb5JuuSxk90Dshw</string> <!--DebugKey -->
-
+    <string name="maps_api_key">AIzaSyBygd3YyW4tWrh3RvKiYPANIXhjnjiuthY</string>
+    <!--DebugKey -->
     <string name="nodes_url_hh">http://graph.hamburg.freifunk.net/nodes.json</string>
-    <string name="nodes_url_hl">http://188.138.99.158/mesh/nodes.json</string>
+    <string name="nodes_url_hl">http://luebeck.freifunk.net/map/nodes.json</string>
     <string name="nodes_url_ki">http://freifunk.in-kiel.de/ffmap/nodes.json</string>
     <string name="nodes_url_pb">http://map.paderborn.freifunk.net/nodes.json</string>
 </resources>
