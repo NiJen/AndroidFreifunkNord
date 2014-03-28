@@ -1,14 +1,10 @@
 package de.nijen.freifunknord;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import de.nijen.freifunknord.R;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -17,56 +13,44 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 public class FreifunkNord extends Activity {
-    /** Called when the activity is first created. */
-	private Uri url ;
 	ArrayList<HashMap<String, String>> result;
+    /**
+     * Called when the activity is first created.
+     */
+    private Uri url;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); 
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String default_url = getString(R.string.nodes_url_hh);
-    	url = Uri.parse(sharedPrefs.getString("ffstaedteValues", default_url));
-    	HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
-    	task.execute();
+        super.onCreate(savedInstanceState);
+        updateList();
     }
     
 
-   public void  updateList(){
-	   SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
-	   String default_url = getString(R.string.nodes_url_hh);
-	   url = Uri.parse(sharedPrefs.getString("ffstaedteValues", default_url));
-  	   HttpAsyncTask task = new HttpAsyncTask(url.toString(), result, this);
-  	   task.execute();	 
+   public void  updateList() {
+       Resources res = getResources();
+       String[] staedte = res.getStringArray(R.array.staedte);
+       List<Uri> uris = new ArrayList<Uri>();
+       for (String s : staedte) {
+           uris.add(Uri.parse(s));
+       }
+       HttpAsyncTask task = new HttpAsyncTask(uris, result, this);
+       task.execute();
    }
    
 	protected void displayResults(ArrayList<HashMap<String, String>> result2) {
-		SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 		setContentView(R.layout.freifunkhh_main);
 		TextView StatsTV = (TextView) findViewById(R.id.textViewStats);
-		//TODO Besser auslesen lassen
-		String ort = "Hamburg";
-		try{
-			String[] ortetest = getResources().getStringArray(R.array.ffstaedteValues);
-			if (sharedPrefs.getString("ffstaedteValues", "").equals(ortetest[0])){
-				ort ="Hamburg";
-			}
-			else if (sharedPrefs.getString("ffstaedteValues", "").equals(ortetest[1])){
-				ort ="Lübeck";
-			}
-			else if (sharedPrefs.getString("ffstaedteValues", "").equals(ortetest[2])){
-				ort ="Kiel";
-			}
-		}finally{};
-		//ENDE todo 
-		
+
 		StatsTV.setText(  "Knoten: " + String.valueOf(Nodes.intKnoten) + "\t" + "\t"
 						+ "Clients: " + String.valueOf(Nodes.intClients) + "\t" + "\t"
-						+ "Gateways: " + String.valueOf(Nodes.intGateways) + "\t" + "\t"
-						+ ort
-						);
-		
-		ListView listView = (ListView) findViewById(R.id.listView1);
+                + "Gateways: " + String.valueOf(Nodes.intGateways));
+
+        ListView listView = (ListView) findViewById(R.id.listView1);
 		ListAdapter adapter = new SimpleAdapter(FreifunkNord.this, Nodes.mylist ,R.layout.custom_row_view,
 				 						new String[]{"id", "name", "geo", "online"},
 				 						new int[]{ R.id.nodeid , R.id.nodename, R.id.nodegeo, R.id.nodeonline });
@@ -93,9 +77,6 @@ public class FreifunkNord extends Activity {
 	    	startActivity(map_view);
 	        return true;
 	    case R.id.menu_settings:
-	    	Intent settingsActivity = new Intent(getBaseContext(),
-                    Preference.class);
-	    	startActivity(settingsActivity);
 	        return true;
 	    case R.id.WWW:
         	String www=this.getString(R.string.www);
