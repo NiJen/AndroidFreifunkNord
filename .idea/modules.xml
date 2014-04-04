@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Freifunk.iml" filepath="$PROJECT_DIR$/Freifunk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/discover/discover.iml" filepath="$PROJECT_DIR$/discover/discover.iml" />
+    </modules>
+  </component>
+</project>
+
