@@ -52,6 +52,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import net.freifunk.android.discover.model.Community;
 import net.freifunk.android.discover.model.Node;
+import net.freifunk.android.discover.model.MapMaster;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -101,6 +102,7 @@ public class Main extends ActionBarActivity
 
         rq = Volley.newRequestQueue(this.getApplicationContext());
         updateDirectory();
+        updateMaps();
 
     }
 
@@ -283,6 +285,35 @@ public class Main extends ActionBarActivity
                                 Community.communities.add(c);
                             }
                         });
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+                Log.e(TAG, volleyError.toString());
+            }
+        }));
+    }
+
+    void updateMaps() {
+        if (MapMaster.maps.size() > 0)
+            return;
+
+        String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
+        rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject jsonObject) {
+                try {
+                    Iterator mapkeys = jsonObject.keys();
+                    while (mapkeys.hasNext()) {
+                        String mapName = mapkeys.next().toString();
+                        String mapUrl = jsonObject.getString(mapName);
+                        MapMaster map = new MapMaster(mapName, mapUrl);
+                        MapMaster.maps.add(map);
+                        Log.e(TAG, "Addedmap");
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, e.toString());

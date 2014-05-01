@@ -28,10 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.maps.android.clustering.ClusterItem;
 /**
  * Created by pd on 31.03.14.
  */
-public class Node {
+public class Node implements ClusterItem {
 
     public static final Set<Node> nodes = Collections.synchronizedSet(new HashSet<Node>());
 
@@ -63,6 +64,8 @@ public class Node {
                 ", id='" + id + '\'' +
                 '}';
     }
+    @Override
+    public LatLng getPosition() { return geo; }
 
     public List<String> getMacs() {
         return macs;

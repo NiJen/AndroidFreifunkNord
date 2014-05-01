@@ -22,6 +22,9 @@ package net.freifunk.android.discover;
 
 
 import android.app.Activity;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,6 +39,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
@@ -43,8 +47,11 @@ import com.google.maps.android.ui.IconGenerator;
 import net.freifunk.android.discover.model.Community;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.NodesResponse;
+import net.freifunk.android.discover.model.MapMaster;
 
 import java.util.HashMap;
+
+import com.google.maps.android.clustering.ClusterManager;
 
 
 /**
@@ -59,6 +66,7 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
     private static final String TAG = "GmapsFragment";
     private HashMap<Marker, Object> markerMap;
     private Callbacks mCallbacks = sDummyCallbacks;
+    private ClusterManager<Node> mClusterManager;
 
     public static GmapsFragment newInstance(String type) {
         GmapsFragment fragment = new GmapsFragment();
@@ -96,18 +104,31 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
 
     private void createNodesMap() {
         markerMap = new HashMap<Marker, Object>();
-        String URL = "http://map.paderborn.freifunk.net/nodes.json";
+
+        mClusterManager = new ClusterManager<Node>(getActivity(), getMap());
+        getMap().setOnCameraChangeListener(mClusterManager);
+        getMap().setOnMarkerClickListener(mClusterManager);
+
+        getMap().setMyLocationEnabled(true);
+        LatLng germany = new LatLng(51, 9);
+        getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(germany, 6));
+
         RequestQueue rq = Volley.newRequestQueue(this.getActivity().getApplicationContext());
         NodesResponse nr = new NodesResponse(new NodesResponse.Callbacks() {
             @Override
             public void onNodeAvailable(Node node) {
                 if (node.getGeo() != null) {
-                    Marker marker = getMap().addMarker(new MarkerOptions().title(node.getName()).position(node.getGeo()));
-                    markerMap.put(marker, node);
+                    //Marker marker = getMap().addMarker(new MarkerOptions().title(node.getName()).position(node.getGeo()));
+                    //markerMap.put(marker, node);
+
+                    mClusterManager.addItem(node);
+
                 }
             }
         });
-        rq.add(new JsonObjectRequest(URL, null, nr, nr));
+        for (MapMaster m: MapMaster.maps) {
+            rq.add(new JsonObjectRequest(m.getMapUrl(), null, nr, nr));
+       }
     }
 
 
