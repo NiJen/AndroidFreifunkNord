@@ -1,6 +1,6 @@
 {
     	"hamburg" : "http://graph.hamburg.freifunk.net/nodes.json",
     	"kiel": "http://freifunk.in-kiel.de/ffmap/nodes.json",
-    	"lübeck" : "http://188.138.99.158/mesh/nodes.json",
+    	"lübeck" : "http://freifunk.metameute.de/map/nodes.json",
     	"paderborn" : "http://map.paderborn.freifunk.net/nodes.json"
 }
