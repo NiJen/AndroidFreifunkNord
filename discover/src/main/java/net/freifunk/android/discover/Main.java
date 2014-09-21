@@ -162,12 +162,13 @@ public class Main extends ActionBarActivity
             case 1:
                 mTitle = getString(R.string.title_section1);
                 break;
-            case 2:
+/*           case 2:
                 mTitle = getString(R.string.title_section2);
                 break;
             case 3:
                 mTitle = getString(R.string.title_section3);
                 break;
+                */
         }
     }
 
@@ -269,7 +270,7 @@ public class Main extends ActionBarActivity
         if (Community.communities.size() > 0)
             return;
 
-        String URL = "https://raw.githubusercontent.com/freifunk/directory.api.freifunk.net/master/directory.json";
+        String URL = "";// "https://raw.githubusercontent.com/freifunk/directory.api.freifunk.net/master/directory.json";
         rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
@@ -277,6 +278,7 @@ public class Main extends ActionBarActivity
                     Iterator citykeys = jsonObject.keys();
                     while (citykeys.hasNext()) {
                         String cityName = citykeys.next().toString();
+
                         String detailUrl = jsonObject.getString(cityName);
                         Community comm = new Community(cityName, detailUrl);
                         comm.populate(rq, new Community.CommunityReady() {
@@ -312,6 +314,7 @@ public class Main extends ActionBarActivity
                         String mapName = mapkeys.next().toString();
                         String mapUrl = jsonObject.getString(mapName);
                         MapMaster map = new MapMaster(mapName, mapUrl);
+                        Log.v(TAG, map.details());
                         MapMaster.maps.add(map);
                         Log.e(TAG, "Addedmap");
                     }

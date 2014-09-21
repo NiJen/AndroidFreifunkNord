@@ -54,14 +54,18 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
             JSONArray node_list = jsonObject.getJSONArray("nodes");
             for (int i = 0; i < node_list.length(); i++) {
                 JSONObject node = node_list.getJSONObject(i);
-
+                List<String> mac_list = new ArrayList<String>(1);
                 // MAC
-                String[] macs = ((String) node.get("macs")).split(",");
-                List<String> mac_list = new ArrayList<String>(macs.length);
-                for (String mac: macs) {
-                    mac_list.add(mac.trim());
+                if ( node.has("macs")  )
+                {
+                    String[] macs = ((String) node.get("macs")).split(",");
+                    mac_list = new ArrayList<String>(macs.length);
+                    for (String mac : macs) {
+                        mac_list.add(mac.trim());
+                    }
+                }else {
+                   mac_list.add(" ");
                 }
-
                 // Name
                 String name = ((String) node.get("name")).trim();
 
@@ -80,7 +84,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
 
                 // Geo
                 LatLng pos = null;
-                Log.d(TAG, String.valueOf(node.get("geo")));
+ //               Log.d(TAG, String.valueOf(node.get("geo")));
                 if (!String.valueOf(node.get("geo")).equals("null")) {
                     JSONArray geo = node.getJSONArray("geo");
                     Double lat = (Double) geo.get(0);
@@ -92,7 +96,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 String id = ((String) node.get("id")).trim();
 
                 Node n = new Node(mac_list, name, firmware, flags, pos, id);
-                Log.d(TAG, n.toString());
+   //             Log.d(TAG, n.toString());
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }
