@@ -1,21 +1,15 @@
 Freifunk-Android
 ================
+*Hosted on https://github.com/NiJen/AndroidFreifunkNord*
 
 Development
 ===========
-To get this runninh in  Android Studio you need to select `Tools > Android > SDK Manager` there select and install "Google Play services" and "Google Repository"
+To get this running in Android Studio you need to select `Tools > Android > SDK Manager` there select and install "Google Play services" and "Google Repository"
 
 
 IDEAS/TODO
 ====
-That ideas should be discuss!
+That ideas should be discussed!
 
-- [ ] repair/update the community parser
-- [ ] create Database for nodelist and communities
-  - [ ] fill database with nodes 
-  - [ ] update database nodes
-  - [ ] read mapmarker nodes from database
-  - [ ] fill database with communities infos 
-  - [ ] update database communities
-  - [ ] read communities from database
-- [ ] settings, only show nodes from individual communities
+- [ ] TODOs should be discussed directly on GitHub Issue Tracker
+- [ ] vote for Ideas on http://freifunk.discovibration.de/qa/?qa=112/ideas-for-androidfreifunknord and create more Ideas to vote (click "Antwort")
