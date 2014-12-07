@@ -12,28 +12,32 @@ import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Observable;
 import java.util.Set;
 
 /**
  * Created by NiJen on 30.04.14.
  */
-public class MapMaster {
-    private static final String TAG = "MapMaster";
-    public static final Set<MapMaster> maps = Collections.synchronizedSet(new HashSet<MapMaster>());
 
-    String mapName;
-    String mapUrl;
 
-    public MapMaster(String name, String mapUrl) {
-        this.mapName = name;
-        this.mapUrl = mapUrl;
+public class MapMaster extends Observable {
+
+   private static MapMaster mInstance;
+
+    private final String TAG = "MapMaster";
+    private final Set<Map> maps = Collections.synchronizedSet(new HashSet<Map>());
+
+    private MapMaster() {
+
     }
 
-    public String getMapName() { return mapName; }
-
-    public String getMapUrl() {
-        return mapUrl;
+    public static synchronized MapMaster getInstance() {
+        if (mInstance == null) {
+            mInstance = new MapMaster();
+        }
+        return mInstance;
     }
+
 
     /**
      * @brief Save the JSON data to the sd card
@@ -45,11 +49,18 @@ public class MapMaster {
      */
     public void loadFromSd(){};
 
-    public String details() {
-        final StringBuffer sb = new StringBuffer("MapMaster{");
-        sb.append("name='").append(mapName).append('\'');
-        sb.append(", mapUrl='").append(mapUrl).append('\'');
-        sb.append('}');
-        return sb.toString();
+
+    public void addMap(Map m) {
+        maps.add(m);
+        setChanged();
+        notifyObservers();
     }
+
+    public Set<Map> getMaps() {
+        return maps;
+    }
+    public boolean isEmpty() {
+        return (maps.size() == 0);
+    }
+
 }

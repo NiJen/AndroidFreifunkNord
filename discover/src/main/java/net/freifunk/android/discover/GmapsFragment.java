@@ -45,11 +45,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
 
 import net.freifunk.android.discover.model.Community;
+import net.freifunk.android.discover.model.Map;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.NodesResponse;
 import net.freifunk.android.discover.model.MapMaster;
 
 import java.util.HashMap;
+import java.util.Observable;
+import java.util.Observer;
 
 import com.google.maps.android.clustering.ClusterManager;
 
@@ -58,7 +61,7 @@ import com.google.maps.android.clustering.ClusterManager;
  * A simple {@link android.support.v4.app.Fragment} subclass.
  *
  */
-public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMarkerClickListener {
+public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMarkerClickListener, Observer {
 
     public static final String ARG_TYPE = "type_id";
     public static final String COMMUNITY_TYPE = "type_community";
@@ -72,6 +75,9 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
         GmapsFragment fragment = new GmapsFragment();
         Bundle b = new Bundle();
         b.putString(ARG_TYPE, type);
+
+        MapMaster.getInstance().addObserver(fragment);
+
         fragment.setArguments(b);
         return fragment;
     }
@@ -79,6 +85,8 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
     public GmapsFragment() {
         // Required empty public constructor
     }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -98,11 +106,16 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
                 createNodesMap();
             }
         }
+    }
 
-
+    @Override
+    public void update(Observable observable, Object data) {
+        createNodesMap();
     }
 
     private void createNodesMap() {
+        MapMaster mapMaster = MapMaster.getInstance();
+
         markerMap = new HashMap<Marker, Object>();
 
         mClusterManager = new ClusterManager<Node>(getActivity(), getMap());
@@ -126,7 +139,8 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
                 }
             }
         });
-        for (MapMaster m: MapMaster.maps) {
+
+        for (Map m : mapMaster.getMaps()) {
             rq.add(new JsonObjectRequest(m.getMapUrl(), null, nr, nr));
        }
     }

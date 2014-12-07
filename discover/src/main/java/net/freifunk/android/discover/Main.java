@@ -51,6 +51,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
 
 import net.freifunk.android.discover.model.Community;
+import net.freifunk.android.discover.model.Map;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.MapMaster;
 
@@ -301,7 +302,9 @@ public class Main extends ActionBarActivity
     }
 
     void updateMaps() {
-        if (MapMaster.maps.size() > 0)
+        MapMaster mapMaster = MapMaster.getInstance();
+
+        if (!mapMaster.isEmpty())
             return;
 
         String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
@@ -309,13 +312,16 @@ public class Main extends ActionBarActivity
             @Override
             public void onResponse(JSONObject jsonObject) {
                 try {
+                    MapMaster mapMaster = MapMaster.getInstance();
+
                     Iterator mapkeys = jsonObject.keys();
                     while (mapkeys.hasNext()) {
                         String mapName = mapkeys.next().toString();
                         String mapUrl = jsonObject.getString(mapName);
-                        MapMaster map = new MapMaster(mapName, mapUrl);
-                        Log.v(TAG, map.details());
-                        MapMaster.maps.add(map);
+                        Map m = new Map(mapName, mapUrl);
+                        Log.v(TAG, m.details());
+
+                        mapMaster.addMap(m);
                         Log.e(TAG, "Addedmap");
                     }
                 } catch (JSONException e) {
