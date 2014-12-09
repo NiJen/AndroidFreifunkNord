@@ -272,6 +272,7 @@ public class Main extends ActionBarActivity
             return;
 
         String URL = "";// "https://raw.githubusercontent.com/freifunk/directory.api.freifunk.net/master/directory.json";
+        /*
         rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
@@ -299,6 +300,7 @@ public class Main extends ActionBarActivity
                 Log.e(TAG, volleyError.toString());
             }
         }));
+        */
     }
 
     void updateMaps() {
@@ -322,7 +324,7 @@ public class Main extends ActionBarActivity
                         Log.v(TAG, m.details());
 
                         mapMaster.addMap(m);
-                        Log.e(TAG, "Addedmap");
+                        Log.e(TAG, "Addedmap " + mapName);
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, e.toString());

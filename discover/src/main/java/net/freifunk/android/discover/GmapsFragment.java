@@ -103,6 +103,10 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
             if (type.equals(COMMUNITY_TYPE)) {
                 createCommunityMap();
             } else if (type.equals(NODES_TYPE)) {
+                for (Map m : MapMaster.getInstance().getMaps()) {
+                    m.setAddedToMap(false);
+                }
+
                 createNodesMap();
             }
         }
@@ -117,8 +121,8 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
         MapMaster mapMaster = MapMaster.getInstance();
 
         markerMap = new HashMap<Marker, Object>();
-
         mClusterManager = new ClusterManager<Node>(getActivity(), getMap());
+
         getMap().setOnCameraChangeListener(mClusterManager);
         getMap().setOnMarkerClickListener(mClusterManager);
 
@@ -135,13 +139,20 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
                     //markerMap.put(marker, node);
 
                     mClusterManager.addItem(node);
-
                 }
+            }
+
+            @Override
+            public void onResponseFinished() {
+                mClusterManager.cluster();
             }
         });
 
         for (Map m : mapMaster.getMaps()) {
-            rq.add(new JsonObjectRequest(m.getMapUrl(), null, nr, nr));
+            if (!m.alreadyAddedToMap()) {
+                m.setAddedToMap(true);
+                rq.add(new JsonObjectRequest(m.getMapUrl(), null, nr, nr));
+            }
        }
     }
 
