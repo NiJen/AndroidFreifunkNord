@@ -7,10 +7,12 @@ public class Map {
 
     String mapName;
     String mapUrl;
+    boolean addedToMap;
 
     public Map(String name, String mapUrl) {
         this.mapName = name;
         this.mapUrl = mapUrl;
+        this.addedToMap = false;
     }
 
     public String getMapName() {
@@ -19,6 +21,14 @@ public class Map {
 
     public String getMapUrl() {
         return mapUrl;
+    }
+
+    public void setAddedToMap(boolean addedToMap) {
+        this.addedToMap = addedToMap;
+    }
+
+    public boolean alreadyAddedToMap() {
+        return this.addedToMap;
     }
 
     public String details() {

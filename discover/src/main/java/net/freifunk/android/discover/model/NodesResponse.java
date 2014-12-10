@@ -46,6 +46,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
 
     public interface Callbacks {
         void onNodeAvailable(Node n);
+        void onResponseFinished();
     }
 
     @Override
@@ -100,6 +101,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }
+            mCallback.onResponseFinished();
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
         }
