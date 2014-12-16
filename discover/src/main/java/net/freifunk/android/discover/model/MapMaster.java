@@ -25,7 +25,7 @@ public class MapMaster extends Observable {
    private static MapMaster mInstance;
 
     private final String TAG = "MapMaster";
-    private final Set<Map> maps = Collections.synchronizedSet(new HashSet<Map>());
+    private final Set<NodeMap> maps = Collections.synchronizedSet(new HashSet<NodeMap>());
 
     private MapMaster() {
 
@@ -50,13 +50,13 @@ public class MapMaster extends Observable {
     public void loadFromSd(){};
 
 
-    public void addMap(Map m) {
+    public void addMap(NodeMap m) {
         maps.add(m);
         setChanged();
         notifyObservers();
     }
 
-    public Set<Map> getMaps() {
+    public Set<NodeMap> getMaps() {
         return maps;
     }
     public boolean isEmpty() {

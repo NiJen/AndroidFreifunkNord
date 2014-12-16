@@ -45,8 +45,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.maps.android.ui.IconGenerator;
 
 import net.freifunk.android.discover.model.Community;
-import net.freifunk.android.discover.model.Map;
 import net.freifunk.android.discover.model.Node;
+import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.NodesResponse;
 import net.freifunk.android.discover.model.MapMaster;
 
@@ -103,7 +103,7 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
             if (type.equals(COMMUNITY_TYPE)) {
                 createCommunityMap();
             } else if (type.equals(NODES_TYPE)) {
-                for (Map m : MapMaster.getInstance().getMaps()) {
+                for (NodeMap m : MapMaster.getInstance().getMaps()) {
                     m.setAddedToMap(false);
                 }
 
@@ -130,30 +130,16 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
         LatLng germany = new LatLng(51, 9);
         getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(germany, 6));
 
-        RequestQueue rq = Volley.newRequestQueue(this.getActivity().getApplicationContext());
-        NodesResponse nr = new NodesResponse(new NodesResponse.Callbacks() {
-            @Override
-            public void onNodeAvailable(Node node) {
-                if (node.getGeo() != null) {
-                    //Marker marker = getMap().addMarker(new MarkerOptions().title(node.getName()).position(node.getGeo()));
-                    //markerMap.put(marker, node);
-
-                    mClusterManager.addItem(node);
-                }
-            }
-
-            @Override
-            public void onResponseFinished() {
-                mClusterManager.cluster();
-            }
-        });
-
-        for (Map m : mapMaster.getMaps()) {
+        for (NodeMap m : mapMaster.getMaps()) {
             if (!m.alreadyAddedToMap()) {
+
+                for(Node n : m.getNodes()) {
+                    mClusterManager.addItem(n);
+                }
                 m.setAddedToMap(true);
-                rq.add(new JsonObjectRequest(m.getMapUrl(), null, nr, nr));
             }
-       }
+        }
+        mClusterManager.cluster();
     }
 
 
