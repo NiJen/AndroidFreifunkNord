@@ -38,15 +38,17 @@ import java.util.Map;
 
 public class NodesResponse implements Response.Listener<JSONObject>, Response.ErrorListener  {
     private final String TAG = "NodesResponse";
+    private final NodeMap mCallingMap;
     private final Callbacks mCallback;
 
-    public NodesResponse(Callbacks callbacks) {
+    public NodesResponse(NodeMap map, Callbacks callbacks) {
+        this.mCallingMap = map;
         this.mCallback = callbacks;
     }
 
     public interface Callbacks {
         void onNodeAvailable(Node n);
-        void onResponseFinished();
+        void onResponseFinished(NodeMap map);
     }
 
     @Override
@@ -97,13 +99,12 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 String id = ((String) node.get("id")).trim();
 
                 Node n = new Node(mac_list, name, firmware, flags, pos, id);
-   //             Log.d(TAG, n.toString());
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }
-            mCallback.onResponseFinished();
+            mCallback.onResponseFinished(this.mCallingMap);
         } catch (JSONException e) {
-            Log.e(TAG, e.toString());
+            Log.e(TAG, "Seems something went wrong while loading Nodes for " + this.mCallingMap.getMapName() + ":" + e.toString());
         }
     }
 

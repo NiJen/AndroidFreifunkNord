@@ -51,7 +51,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
 
 import net.freifunk.android.discover.model.Community;
-import net.freifunk.android.discover.model.Map;
+import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.MapMaster;
 
@@ -69,6 +69,7 @@ import java.util.List;
 public class Main extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, GmapsFragment.Callbacks {
 
+
     private static final String TAG = "Main";
 
     private static final Collection<Node> nodes = Collections.synchronizedSet(new HashSet<Node>());
@@ -83,7 +84,7 @@ public class Main extends ActionBarActivity
      */
     private CharSequence mTitle;
     private GmapsFragment mMapFragment;
-    private RequestQueue rq;
+    private RequestQueue mRequestQueue;
     private Fragment mCommunityFragment;
     private ArrayAdapter<Community> mCommunityAdapter;
 
@@ -100,8 +101,6 @@ public class Main extends ActionBarActivity
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
-
-        rq = Volley.newRequestQueue(this.getApplicationContext());
         updateDirectory();
         updateMaps();
 
@@ -256,16 +255,7 @@ public class Main extends ActionBarActivity
 
 
 
-    /*
-    private void addNodes() {
 
-    }
-
-    void populateMap() {
-
-    }
-
-    */
 
     void updateDirectory() {
         if (Community.communities.size() > 0)
@@ -310,6 +300,9 @@ public class Main extends ActionBarActivity
             return;
 
         String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
+
+        RequestQueue rq =  RequestQueueHelper.getRequestQueue(this.getApplicationContext());
+
         rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
@@ -320,11 +313,9 @@ public class Main extends ActionBarActivity
                     while (mapkeys.hasNext()) {
                         String mapName = mapkeys.next().toString();
                         String mapUrl = jsonObject.getString(mapName);
-                        Map m = new Map(mapName, mapUrl);
-                        Log.v(TAG, m.details());
 
-                        mapMaster.addMap(m);
-                        Log.e(TAG, "Addedmap " + mapName);
+                        NodeMap m = new NodeMap(mapName, mapUrl);
+                        m.loadNodes();
                     }
                 } catch (JSONException e) {
                     Log.e(TAG, e.toString());
