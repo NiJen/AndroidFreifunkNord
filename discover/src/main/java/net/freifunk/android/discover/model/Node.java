@@ -38,14 +38,16 @@ public class Node implements ClusterItem {
 
 
     private List<String> macs;
+    private String mapname;
     private String name;
     private String firmware;
     private Map<String, String> flags;
     private LatLng geo;
     private String id;
 
-    public Node(List<String> macs, String name, String firmware, Map<String, String> flags, LatLng geo, String id) {
+    public Node(List<String> macs, String mapname, String name, String firmware, Map<String, String> flags, LatLng geo, String id) {
         this.macs = macs;
+        this.mapname = mapname;
         this.name = name;
         this.firmware = firmware;
         this.flags = flags;
@@ -57,6 +59,7 @@ public class Node implements ClusterItem {
     public String toString() {
         return "Node{" +
                 "macs=" + macs +
+                ", mapname='" + mapname + '\'' +
                 ", name='" + name + '\'' +
                 ", firmware='" + firmware + '\'' +
                 ", flags=" + flags +
@@ -75,6 +78,9 @@ public class Node implements ClusterItem {
         this.macs = macs;
     }
 
+    public String getMapname() {
+        return mapname;
+    }
     public String getName() {
         return name;
     }

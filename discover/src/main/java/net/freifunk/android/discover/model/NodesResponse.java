@@ -98,7 +98,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 // Id
                 String id = ((String) node.get("id")).trim();
 
-                Node n = new Node(mac_list, name, firmware, flags, pos, id);
+                Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, firmware, flags, pos, id);
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }

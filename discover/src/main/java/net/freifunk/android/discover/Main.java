@@ -88,9 +88,27 @@ public class Main extends ActionBarActivity
     private Fragment mCommunityFragment;
     private ArrayAdapter<Community> mCommunityAdapter;
 
+    private static void setDefaultUncaughtExceptionHandler() {
+        try {
+            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+
+                    Log.e("EXCEPTION", "Uncaught Exception detected in thread {}" + t + " -- " + e);
+                    Log.e("EXCEPTION", "STACK", e);
+
+                    //e.getStackTrace()
+                }
+            });
+        } catch (SecurityException e) {
+            Log.e("EXCEPTION","Could not set the Default Uncaught Exception Handler", e);
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setDefaultUncaughtExceptionHandler();
         setContentView(R.layout.activity_main);
         mNavigationDrawerFragment = (NavigationDrawerFragment)
                 getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
@@ -100,6 +118,8 @@ public class Main extends ActionBarActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+        NodeDBHelper nodeDBHelper = NodeDBHelper.getInstance(this.getApplicationContext());
 
         updateDirectory();
         updateMaps();
