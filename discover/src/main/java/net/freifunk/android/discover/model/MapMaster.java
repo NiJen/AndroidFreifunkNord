@@ -51,7 +51,16 @@ public class MapMaster extends Observable {
 
 
     public void addMap(NodeMap m) {
+
+        // At the moment we assume that a later received Map is updated
+        if (maps.contains(m))
+            maps.remove(m);
+
         maps.add(m);
+        update();
+    }
+
+    public void update() {
         setChanged();
         notifyObservers();
     }
