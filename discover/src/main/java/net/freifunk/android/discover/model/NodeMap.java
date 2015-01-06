@@ -1,7 +1,6 @@
 package net.freifunk.android.discover.model;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -9,13 +8,11 @@ import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.RequestQueue;
 import com.android.volley.RetryPolicy;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 
-import net.freifunk.android.discover.NodeDBHelper;
+import net.freifunk.android.discover.DatabaseHelper;
 import net.freifunk.android.discover.RequestQueueHelper;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by bjoern petri on 12/4/14.
@@ -112,10 +109,10 @@ public class NodeMap {
 
         @Override
         protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
-            NodeDBHelper nodeDBHelper = NodeDBHelper.getInstance(NodeMap.this.context);
+            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(NodeMap.this.context);
 
             for (NodeMap nodeMap : nodeMaps) {
-                ArrayList<Node> nodeList = (ArrayList<Node>) nodeDBHelper.getAllNodesForMap(nodeMap.getMapName());
+                ArrayList<Node> nodeList = (ArrayList<Node>) databaseHelper.getAllNodesForMap(nodeMap.getMapName());
                 nodeMap.addNodes(nodeList);
             }
 
@@ -145,13 +142,13 @@ public class NodeMap {
 
         @Override
         protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
-            NodeDBHelper nodeDBHelper = NodeDBHelper.getInstance(NodeMap.this.context);
+            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(NodeMap.this.context);
 
             for (NodeMap nodeMap : nodeMaps) {
                 ArrayList<Node> nodeList = nodeMap.getNodes();
 
                 for (Node node : nodeList) {
-                    nodeDBHelper.addNode(node);
+                    databaseHelper.addNode(node);
                 }
             }
 
