@@ -10,7 +10,9 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Set;
@@ -25,7 +27,8 @@ public class MapMaster extends Observable {
    private static MapMaster mInstance;
 
     private final String TAG = "MapMaster";
-    private final Set<NodeMap> maps = Collections.synchronizedSet(new HashSet<NodeMap>());
+    private final HashMap<String, NodeMap> maps = new HashMap<String, NodeMap>();
+
 
     private MapMaster() {
 
@@ -41,11 +44,8 @@ public class MapMaster extends Observable {
 
     public void addMap(NodeMap m) {
 
-        // At the moment we assume that a later received Map is updated
-        if (maps.contains(m))
-            maps.remove(m);
-
-        maps.add(m);
+        // At the moment we assume that a later received map is more up to date
+        maps.put(m.getMapName(), m);
         update();
     }
 
@@ -54,9 +54,10 @@ public class MapMaster extends Observable {
         notifyObservers();
     }
 
-    public Set<NodeMap> getMaps() {
-        return maps;
+    public Collection<NodeMap> getMaps() {
+        return maps.values();
     }
+
     public boolean isEmpty() {
         return (maps.size() == 0);
     }

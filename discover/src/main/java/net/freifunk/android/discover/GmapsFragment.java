@@ -103,6 +103,16 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
             if (type.equals(COMMUNITY_TYPE)) {
                 createCommunityMap();
             } else if (type.equals(NODES_TYPE)) {
+
+                mClusterManager = new ClusterManager<Node>(getActivity(), getMap());
+                mClusterManager.clearItems();
+
+                getMap().setOnCameraChangeListener(mClusterManager);
+                getMap().setOnMarkerClickListener(mClusterManager);
+
+                getMap().setMyLocationEnabled(true);
+                getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51, 9), 6));
+
                 for (NodeMap m : MapMaster.getInstance().getMaps()) {
                     m.setAddedToMap(false);
                 }
@@ -121,24 +131,16 @@ public class GmapsFragment extends SupportMapFragment implements GoogleMap.OnMar
         MapMaster mapMaster = MapMaster.getInstance();
 
         markerMap = new HashMap<Marker, Object>();
-        mClusterManager = new ClusterManager<Node>(getActivity(), getMap());
-
-        getMap().setOnCameraChangeListener(mClusterManager);
-        getMap().setOnMarkerClickListener(mClusterManager);
-
-        getMap().setMyLocationEnabled(true);
-        LatLng germany = new LatLng(51, 9);
-        getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(germany, 6));
 
         for (NodeMap m : mapMaster.getMaps()) {
             if (!m.alreadyAddedToMap()) {
-
                 for(Node n : m.getNodes()) {
                     mClusterManager.addItem(n);
                 }
                 m.setAddedToMap(true);
             }
         }
+
         mClusterManager.cluster();
     }
 

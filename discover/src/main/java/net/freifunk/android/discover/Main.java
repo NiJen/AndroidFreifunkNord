@@ -61,6 +61,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -319,13 +320,14 @@ public class Main extends ActionBarActivity
         final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
         RequestQueue rq = RequestQueueHelper.getRequestQueue(this.getApplicationContext());
 
-        ArrayList<NodeMap> mapList = (ArrayList<NodeMap>) databaseHelper.getAllNodeMaps();
+        final HashMap<String, NodeMap> mapList = databaseHelper.getAllNodeMaps();
 
         /* load from database */
-        for (NodeMap map : mapList) {
+        for (NodeMap map : mapList.values()) {
             map.loadNodes();
         }
 
+        /* load from web */
         if (connManager.getActiveNetworkInfo() != null) {
             rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
                 @Override
@@ -340,7 +342,11 @@ public class Main extends ActionBarActivity
 
                             NodeMap m = new NodeMap(mapName, mapUrl);
                             databaseHelper.addNodeMap(m);
-                            m.loadNodes();
+
+                            /* only update, if not already found in database */
+                            if(!mapList.containsKey(m.getMapName())) {
+                               m.loadNodes();
+                            }
                         }
                     } catch (JSONException e) {
                         Log.e(TAG, e.toString());
