@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -45,7 +46,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
@@ -118,8 +118,6 @@ public class Main extends ActionBarActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
-
-        NodeDBHelper nodeDBHelper = NodeDBHelper.getInstance(this.getApplicationContext());
 
         updateDirectory();
         updateMaps();
@@ -314,38 +312,46 @@ public class Main extends ActionBarActivity
     }
 
     void updateMaps() {
-        MapMaster mapMaster = MapMaster.getInstance();
-
-        if (!mapMaster.isEmpty())
-            return;
-
         String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
 
-        RequestQueue rq =  RequestQueueHelper.getRequestQueue(this.getApplicationContext());
+        ConnectivityManager connManager = (ConnectivityManager) getSystemService(this.getBaseContext().CONNECTIVITY_SERVICE);
+        MapMaster mapMaster = MapMaster.getInstance();
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
+        RequestQueue rq = RequestQueueHelper.getRequestQueue(this.getApplicationContext());
 
-        rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    MapMaster mapMaster = MapMaster.getInstance();
+        ArrayList<NodeMap> mapList = (ArrayList<NodeMap>) databaseHelper.getAllNodeMaps();
 
-                    Iterator mapkeys = jsonObject.keys();
-                    while (mapkeys.hasNext()) {
-                        String mapName = mapkeys.next().toString();
-                        String mapUrl = jsonObject.getString(mapName);
+        /* load from database */
+        for (NodeMap map : mapList) {
+            map.loadNodes();
+        }
 
-                        NodeMap m = new NodeMap(mapName, mapUrl);
-                        m.loadNodes();
+        if (connManager.getActiveNetworkInfo() != null) {
+            rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject jsonObject) {
+                    try {
+                        MapMaster mapMaster = MapMaster.getInstance();
+
+                        Iterator mapkeys = jsonObject.keys();
+                        while (mapkeys.hasNext()) {
+                            String mapName = mapkeys.next().toString();
+                            String mapUrl = jsonObject.getString(mapName);
+
+                            NodeMap m = new NodeMap(mapName, mapUrl);
+                            databaseHelper.addNodeMap(m);
+                            m.loadNodes();
+                        }
+                    } catch (JSONException e) {
+                        Log.e(TAG, e.toString());
                     }
-                } catch (JSONException e) {
-                    Log.e(TAG, e.toString());
                 }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Log.e(TAG, volleyError.toString());
-            }
-        }));
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError volleyError) {
+                    Log.e(TAG, volleyError.toString());
+                }
+            }));
+        }
     }
 }

@@ -39,17 +39,6 @@ public class MapMaster extends Observable {
     }
 
 
-    /**
-     * @brief Save the JSON data to the sd card
-     */
-    public void saveToSd(){};
-
-    /**
-     * @brief Load the JSON data from the sd card
-     */
-    public void loadFromSd(){};
-
-
     public void addMap(NodeMap m) {
 
         // At the moment we assume that a later received Map is updated
