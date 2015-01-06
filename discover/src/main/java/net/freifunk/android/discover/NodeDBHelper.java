@@ -143,6 +143,10 @@ public class NodeDBHelper extends SQLiteOpenHelper {
                         geo,
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ID)));
             }
+            else
+            {
+                Log.e("NodeDBHelper", "Node with ID " + nodeID + " not found.");
+            }
         }
         finally {
             if (cursor != null)
@@ -180,7 +184,7 @@ public class NodeDBHelper extends SQLiteOpenHelper {
                             cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIRMWARE)),
                             flags,
                             geo,
-                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ID)));
+                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODEID)));
 
                     Log.d("NodeDBHelper", "Node added to list of all nodes " + node.getId() + "/" + node.getName());
 
