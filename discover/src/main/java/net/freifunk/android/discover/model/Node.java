@@ -54,7 +54,7 @@ public class Node implements ClusterItem {
         this.geo = geo;
         this.id = id;
     }
-
+    
     @Override
     public String toString() {
         return "Node{" +
@@ -67,6 +67,16 @@ public class Node implements ClusterItem {
                 ", id='" + id + '\'' +
                 '}';
     }
+
+
+    public boolean equals(Object o){
+        if(o instanceof Node){
+            Node toCompare = (Node) o;
+            return this.name.equals(toCompare.name) && this.mapname.equals(toCompare.mapname) && this.id.equals(toCompare.id);
+        }
+        return false;
+    }
+
     @Override
     public LatLng getPosition() { return geo; }
 

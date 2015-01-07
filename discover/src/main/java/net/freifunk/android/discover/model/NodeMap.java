@@ -13,6 +13,7 @@ import net.freifunk.android.discover.DatabaseHelper;
 import net.freifunk.android.discover.RequestQueueHelper;
 
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by bjoern petri on 12/4/14.
@@ -24,13 +25,14 @@ public class NodeMap {
     Context context;
     String mapName;
     String mapUrl;
-    ArrayList<Node> nodeList;
+
+    CopyOnWriteArrayList<Node> nodeList;
     boolean addedToMap;
 
     public NodeMap(String name, String mapUrl) {
         this.mapName = name;
         this.mapUrl = mapUrl;
-        this.nodeList = new ArrayList<Node>();
+        this.nodeList = new CopyOnWriteArrayList<Node>();
         this.addedToMap = false;
     }
 
@@ -42,7 +44,7 @@ public class NodeMap {
         return this.mapUrl;
     }
 
-    public ArrayList<Node> getNodes() {
+    public CopyOnWriteArrayList<Node> getNodes() {
         return this.nodeList;
     }
 
@@ -72,7 +74,7 @@ public class NodeMap {
         NodesResponse nr = new NodesResponse(this, new NodesResponse.Callbacks() {
             @Override
             public void onNodeAvailable(Node node) {
-                if (node.getGeo() != null) {
+                if (node.getGeo() != null && !nodeList.contains(node)) {
                     nodeList.add(node);
                 }
             }
@@ -123,7 +125,7 @@ public class NodeMap {
         protected void onPostExecute(NodeMap[] nodeMaps) {
             MapMaster mapMaster = MapMaster.getInstance();
             for (NodeMap nodeMap : nodeMaps) {
-                Log.d(TAG, "Finished database loading  " + nodeMap.getMapName());
+                Log.e(TAG, "Finished database loading  " + nodeMap.getMapName());
                 // only update if there are nodes available
                 if (nodeMap.getNodes().size() > 0) {
                     mapMaster.addMap(nodeMap);
@@ -145,7 +147,7 @@ public class NodeMap {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(NodeMap.this.context);
 
             for (NodeMap nodeMap : nodeMaps) {
-                ArrayList<Node> nodeList = nodeMap.getNodes();
+                CopyOnWriteArrayList<Node> nodeList = nodeMap.getNodes();
 
                 for (Node node : nodeList) {
                     databaseHelper.addNode(node);
