@@ -111,7 +111,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.insert(TABLE_MAPS, null, values);
         }
         else {
-            Log.d("DatabaseHelper", "NodeMap added " + map.getMapName() + "/" + map.getMapUrl());
+            Log.d("DatabaseHelper", "NodeMap updated " + map.getMapName() + "/" + map.getMapUrl());
             db.update(TABLE_MAPS, values, COLUMN_MAPS_MAPNAME + " = \"" + map.getMapName() + "\"", null);
         }
     }

@@ -8,13 +8,13 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="action_settings">Einstellungen</string>
-    <string name="maps_api_key">AIzaSyBygd3YyW4tWrh3RvKiYPANIXhjnjiuthY</string>
+    <string name="maps_api_key">AIzaSyDE9AlOlichal3frriZeQFTuJJPSqyHy24</string>
     <string name="title_activity_main">Freifunk</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_section1">Karte</string>
     <string name="title_section2">Communities</string>
     <string name="title_section3">Section 3</string>
-    <string name="action_example">Example action</string>
+    <string name="action_reload">Neu laden</string>
     <string name="title_community_list">Communities</string>
     <string name="title_community_detail">Community Detail</string>
     <string name="title_activity_community_info">Community Information</string>

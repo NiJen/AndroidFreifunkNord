@@ -2,8 +2,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="net.freifunk.android.discover.Main" >
-    <item android:id="@+id/action_example"
-        android:title="@string/action_example"
+    <item android:id="@+id/action_reload"
+        android:title="@string/action_reload"
         app:showAsAction="withText|ifRoom" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
