@@ -4,5 +4,6 @@
 	"kiel" : "http://map.freifunk.in-kiel.de/json/nodes.json",
 	"lübeck" : "http://map.luebeck.freifunk.net/nodes.json",
 	"münster" : "https://freifunk-muenster.de/map/nodes.json",
-	"paderborn" : "http://map.paderborn.freifunk.net/nodes.json"
+	"paderborn" : "http://map.paderborn.freifunk.net/nodes.json",
+	"uelzen" : "http://uegw1.freifunk-uelzen.de/map/nodes.json"
 }
