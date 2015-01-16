@@ -77,7 +77,6 @@ public class Main extends ActionBarActivity
 
     private static final int RESULT_SETTINGS = 1;
     private static final String TAG = "Main";
-    private static boolean updateInProgress = false;
 
     private static final Collection<Node> nodes = Collections.synchronizedSet(new HashSet<Node>());
     private static final List<Community> communities = Collections.synchronizedList(new ArrayList<Community>());
@@ -230,8 +229,14 @@ public class Main extends ActionBarActivity
         switch(id) {
 
             case R.id.action_reload:
-                if (updateInProgress == false && updateTask != null) {
+                RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this.getApplicationContext());
+                int queueSize = requestHelper.size();
+
+                if (queueSize == 0 && updateTask != null) {
                     updateTask.run();
+                }
+                else {
+                    Log.w(TAG, "No action performed at the moment - QueueSize is " + queueSize);
                 }
                 break;
             case R.id.action_settings:
@@ -341,7 +346,7 @@ public class Main extends ActionBarActivity
 
         MapMaster mapMaster = MapMaster.getInstance();
         final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
-        final RequestQueue rq = RequestQueueHelper.getRequestQueue(this.getApplicationContext());
+        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this.getApplicationContext());
 
         final HashMap<String, NodeMap> mapList = databaseHelper.getAllNodeMaps();
 
@@ -357,8 +362,6 @@ public class Main extends ActionBarActivity
         updateTask = new TimerTask() {
             @Override
             public void run() {
-                updateInProgress = true;
-
                 /* load from database */
                 for (NodeMap map : mapList.values()) {
                     map.loadNodes();
@@ -367,7 +370,7 @@ public class Main extends ActionBarActivity
                 /* load from web */
                 if (connManager.getActiveNetworkInfo() != null && (sync_wifi == false || mWifi.isConnected() == true)) {
                     Log.d(TAG, "Performing online update. Next update at " + scheduledExecutionTime());
-                    rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
+                    requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
                         @Override
                         public void onResponse(JSONObject jsonObject) {
                             try {
@@ -389,19 +392,20 @@ public class Main extends ActionBarActivity
                             } catch (JSONException e) {
                                 Log.e(TAG, e.toString());
                             }
+                            finally {
+                                requestHelper.RequestDone();
+                            }
                         }
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError volleyError) {
                             Log.e(TAG, volleyError.toString());
+                            requestHelper.RequestDone();
                         }
                     }));
                 } else {
                     Log.d(TAG, "Online update is skipped. Next try at " + scheduledExecutionTime());
                 }
-
-                updateInProgress = false;
-
             }
         };
 

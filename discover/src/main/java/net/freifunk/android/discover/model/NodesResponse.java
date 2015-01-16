@@ -26,6 +26,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.google.android.gms.maps.model.LatLng;
 
+import net.freifunk.android.discover.RequestQueueHelper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -102,14 +104,19 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }
-            mCallback.onResponseFinished(this.mCallingMap);
         } catch (JSONException e) {
             Log.e(TAG, "Seems something went wrong while loading Nodes for " + this.mCallingMap.getMapName() + ":" + e.toString());
+        }
+        finally {
+            mCallback.onResponseFinished(this.mCallingMap);
         }
     }
 
     @Override
     public void onErrorResponse(VolleyError volleyError) {
+            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(null);
+
             Log.e(TAG, volleyError.toString());
+            requestHelper.RequestDone();
         }
 }

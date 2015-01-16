@@ -65,10 +65,12 @@ public class NodeMap {
     }
 
     public void loadNodes() {
+        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(null);
+
         LoadNodesDatabaseTask loadNodesDatabaseTask = new LoadNodesDatabaseTask();
         loadNodesDatabaseTask.execute(new NodeMap[] { this });
 
-        RequestQueue rq = RequestQueueHelper.getRequestQueue(null);
+
         // TODO: can we reference to the Map from within the Callback, similar to
         // the nodeList ?
         NodesResponse nr = new NodesResponse(this, new NodesResponse.Callbacks() {
@@ -81,12 +83,18 @@ public class NodeMap {
 
             @Override
             public void onResponseFinished(NodeMap map) {
-                MapMaster mapMaster = MapMaster.getInstance();
-                Log.d(TAG, "Finished loading + " +  map.getMapName());
-                mapMaster.addMap(map);
+                try {
+                    MapMaster mapMaster = MapMaster.getInstance();
+                    Log.d(TAG, "Finished loading + " + map.getMapName());
+                    mapMaster.addMap(map);
 
-                SaveNodesDatabaseTask saveNodesDatabaseTask = new SaveNodesDatabaseTask();
-                saveNodesDatabaseTask.execute(new NodeMap[] { map });
+                    SaveNodesDatabaseTask saveNodesDatabaseTask = new SaveNodesDatabaseTask();
+                    saveNodesDatabaseTask.execute(new NodeMap[]{map});
+                }
+                finally {
+                    // we set the RequestDone when the saveNodesDatabaseTask has been done
+                    //  requestHelper.RequestDone();
+                }
             }
         });
 
@@ -95,7 +103,7 @@ public class NodeMap {
         RetryPolicy policy = new DefaultRetryPolicy(30000, 5, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
         request.setRetryPolicy(policy);
 
-        rq.add(request);
+        requestHelper.add(request);
     }
 
     public String details() {
@@ -159,9 +167,14 @@ public class NodeMap {
 
         @Override
         protected void onPostExecute(NodeMap[] nodeMaps) {
+            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(null);
+
             for (NodeMap nodeMap : nodeMaps) {
                 Log.d(TAG, "Finished saving + " + nodeMap.getMapName());
             }
+
+            requestHelper.RequestDone();
+
         }
     }
 
