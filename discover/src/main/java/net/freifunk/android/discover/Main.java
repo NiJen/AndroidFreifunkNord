@@ -23,11 +23,14 @@ package net.freifunk.android.discover;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.DrawerLayout;
@@ -65,12 +68,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 
 public class Main extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, GmapsFragment.Callbacks {
 
-
+    private static final int RESULT_SETTINGS = 1;
     private static final String TAG = "Main";
 
     private static final Collection<Node> nodes = Collections.synchronizedSet(new HashSet<Node>());
@@ -88,6 +93,8 @@ public class Main extends ActionBarActivity
     private RequestQueue mRequestQueue;
     private Fragment mCommunityFragment;
     private ArrayAdapter<Community> mCommunityAdapter;
+
+    private TimerTask updateTask = null;
 
     private static void setDefaultUncaughtExceptionHandler() {
         try {
@@ -218,9 +225,26 @@ public class Main extends ActionBarActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
+
+        switch(id) {
+
+            case R.id.action_reload:
+                RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this.getApplicationContext());
+                int queueSize = requestHelper.size();
+
+                if (queueSize == 0 && updateTask != null) {
+                    updateTask.run();
+                }
+                else {
+                    Log.w(TAG, "No action performed at the moment - QueueSize is " + queueSize);
+                }
+                break;
+            case R.id.action_settings:
+                Intent i = new Intent(this, SettingsActivity.class);
+                startActivityForResult(i, RESULT_SETTINGS);
+                return true;
+         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -313,51 +337,87 @@ public class Main extends ActionBarActivity
     }
 
     void updateMaps() {
-        String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
+        final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
 
-        ConnectivityManager connManager = (ConnectivityManager) getSystemService(this.getBaseContext().CONNECTIVITY_SERVICE);
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        final ConnectivityManager connManager = (ConnectivityManager) getSystemService(this.getBaseContext().CONNECTIVITY_SERVICE);
+        final NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
         MapMaster mapMaster = MapMaster.getInstance();
         final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
-        RequestQueue rq = RequestQueueHelper.getRequestQueue(this.getApplicationContext());
+        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this.getApplicationContext());
 
         final HashMap<String, NodeMap> mapList = databaseHelper.getAllNodeMaps();
 
-        /* load from database */
-        for (NodeMap map : mapList.values()) {
-            map.loadNodes();
+        final boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
+        final int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));
+
+        if (sync_wifi == true) {
+            Log.d(TAG, "Performing online update ONLY via wifi, every " + sync_frequency + " minutes");
+        } else {
+            Log.d(TAG, "Performing online update ALWAYS, every " + sync_frequency + " minutes");
         }
 
-        /* load from web */
-        if (connManager.getActiveNetworkInfo() != null) {
-            rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject jsonObject) {
-                    try {
-                        MapMaster mapMaster = MapMaster.getInstance();
+        updateTask = new TimerTask() {
+            @Override
+            public void run() {
+                /* load from database */
+                for (NodeMap map : mapList.values()) {
+                    map.loadNodes();
+                }
 
-                        Iterator mapkeys = jsonObject.keys();
-                        while (mapkeys.hasNext()) {
-                            String mapName = mapkeys.next().toString();
-                            String mapUrl = jsonObject.getString(mapName);
+                /* load from web */
+                if (connManager.getActiveNetworkInfo() != null && (sync_wifi == false || mWifi.isConnected() == true)) {
+                    Log.d(TAG, "Performing online update. Next update at " + scheduledExecutionTime());
+                    requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject jsonObject) {
+                            try {
+                                MapMaster mapMaster = MapMaster.getInstance();
 
-                            NodeMap m = new NodeMap(mapName, mapUrl);
-                            databaseHelper.addNodeMap(m);
+                                Iterator mapkeys = jsonObject.keys();
+                                while (mapkeys.hasNext()) {
+                                    String mapName = mapkeys.next().toString();
+                                    String mapUrl = jsonObject.getString(mapName);
 
-                            /* only update, if not already found in database */
-                            if(!mapList.containsKey(m.getMapName())) {
-                               m.loadNodes();
+                                    NodeMap m = new NodeMap(mapName, mapUrl);
+                                    databaseHelper.addNodeMap(m);
+
+                                    // only update, if not already found in database
+                                    if (!mapList.containsKey(m.getMapName())) {
+                                        m.loadNodes();
+                                    }
+                                }
+                            } catch (JSONException e) {
+                                Log.e(TAG, e.toString());
+                            }
+                            finally {
+                                requestHelper.RequestDone();
                             }
                         }
-                    } catch (JSONException e) {
-                        Log.e(TAG, e.toString());
-                    }
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError volleyError) {
+                            Log.e(TAG, volleyError.toString());
+                            requestHelper.RequestDone();
+                        }
+                    }));
+                } else {
+                    Log.d(TAG, "Online update is skipped. Next try at " + scheduledExecutionTime());
                 }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError volleyError) {
-                    Log.e(TAG, volleyError.toString());
-                }
-            }));
+            }
+        };
+
+
+        Timer timer = new Timer();
+
+        if (sync_frequency > 0) {
+            timer.schedule(updateTask, 0, (sync_frequency * 60 * 1000));
         }
+        else {
+            timer.schedule(updateTask, 0);
+        }
+
     }
 }
