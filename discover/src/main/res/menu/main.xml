@@ -2,9 +2,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="net.freifunk.android.discover.Main" >
+
     <item android:id="@+id/action_reload"
+        android:icon="@drawable/ic_action_refresh"
         android:title="@string/action_reload"
-        app:showAsAction="withText|ifRoom" />
+        android:alphabeticShortcut="r"
+        android:orderInCategory="1"
+        app:showAsAction="always" />
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
         android:orderInCategory="100"

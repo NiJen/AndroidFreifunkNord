@@ -114,7 +114,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
 
     @Override
     public void onErrorResponse(VolleyError volleyError) {
-            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(null);
+            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
 
             Log.e(TAG, volleyError.toString());
             requestHelper.RequestDone();

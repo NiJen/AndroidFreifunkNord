@@ -1,7 +1,12 @@
 package net.freifunk.android.discover;
 
+import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -26,18 +31,29 @@ public class RequestQueueHelper {
     private static RequestQueueHelper RequestQueueHelper = null;
     private RequestQueue mRequestQueue = null;
     private Context context;
+    private SharedPreferences sharedPrefs;
+    private ConnectivityManager connManager;
     private AtomicInteger requestInProgress;
+    private Main main;
 
     private RequestQueueHelper(Context context)
     {
         mRequestQueue = Volley.newRequestQueue(context);
     }
 
-    public static synchronized RequestQueueHelper getInstance(Context context) {
+    public static synchronized RequestQueueHelper getInstance() {
+        return RequestQueueHelper;
+    }
+
+    public static synchronized RequestQueueHelper getInstance(Main main) {
         // lazy initialize the request queue, the queue instance will be
         // created when it is accessed for the first time
-        if (RequestQueueHelper == null && context != null) {
-            RequestQueueHelper = new RequestQueueHelper(context);
+        if (RequestQueueHelper == null && main != null) {
+            RequestQueueHelper = new RequestQueueHelper(main.getApplicationContext());
+            RequestQueueHelper.context = main.getApplicationContext();
+            RequestQueueHelper.sharedPrefs = PreferenceManager.getDefaultSharedPreferences(main);
+            RequestQueueHelper.connManager = (ConnectivityManager) main.getSystemService(main.getBaseContext().CONNECTIVITY_SERVICE);            ;
+            RequestQueueHelper.main = main;
             RequestQueueHelper.requestInProgress = new AtomicInteger(0);
         }
 
@@ -46,13 +62,32 @@ public class RequestQueueHelper {
 
     public Request add(Request req)
     {
-        requestInProgress.incrementAndGet();
-        return RequestQueueHelper.mRequestQueue.add(req);
+        NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
+
+        if (connManager.getActiveNetworkInfo() != null && (sync_wifi == false || mWifi.isConnected() == true)) {
+            if (requestInProgress.incrementAndGet() > 0) {
+                main.runOnUiThread(new Runnable() {
+                    public void run() {
+                        main.setRefreshActionButtonState(true);
+                    }
+                });
+            }
+           return RequestQueueHelper.mRequestQueue.add(req);
+        }
+
+        return null;
     }
 
     public void RequestDone()
     {
-        requestInProgress.decrementAndGet();
+        if (requestInProgress.decrementAndGet() == 0) {
+            main.runOnUiThread(new Runnable() {
+                public void run() {
+                    main.setRefreshActionButtonState(false);
+                }
+            });
+        }
     }
 
 

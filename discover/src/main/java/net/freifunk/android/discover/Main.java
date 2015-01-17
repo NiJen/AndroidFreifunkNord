@@ -75,6 +75,8 @@ import java.util.TimerTask;
 public class Main extends ActionBarActivity
         implements NavigationDrawerFragment.NavigationDrawerCallbacks, GmapsFragment.Callbacks {
 
+    private Menu optionsMenu;
+
     private static final int RESULT_SETTINGS = 1;
     private static final String TAG = "Main";
 
@@ -208,6 +210,9 @@ public class Main extends ActionBarActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
+        this.optionsMenu = menu;
+
         if (!mNavigationDrawerFragment.isDrawerOpen()) {
             // Only show items in the action bar relevant to this screen
             // if the drawer is not showing. Otherwise, let the drawer
@@ -217,6 +222,23 @@ public class Main extends ActionBarActivity
             return true;
         }
         return super.onCreateOptionsMenu(menu);
+    }
+
+    public void setRefreshActionButtonState(final boolean refreshing) {
+
+        Log.e(TAG, "setRefreshActionButtonState REACHED");
+
+        if (optionsMenu != null) {
+            final MenuItem refreshItem = optionsMenu
+                    .findItem(R.id.action_reload);
+            if (refreshItem != null) {
+                if (refreshing) {
+                    refreshItem.setActionView(R.layout.activity_main_indeterminate_progress);
+                } else {
+                    refreshItem.setActionView(null);
+                }
+            }
+        }
     }
 
     @Override
@@ -229,7 +251,7 @@ public class Main extends ActionBarActivity
         switch(id) {
 
             case R.id.action_reload:
-                RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this.getApplicationContext());
+                RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
                 int queueSize = requestHelper.size();
 
                 if (queueSize == 0 && updateTask != null) {
@@ -239,6 +261,7 @@ public class Main extends ActionBarActivity
                     Log.w(TAG, "No action performed at the moment - QueueSize is " + queueSize);
                 }
                 break;
+
             case R.id.action_settings:
                 Intent i = new Intent(this, SettingsActivity.class);
                 startActivityForResult(i, RESULT_SETTINGS);
@@ -341,17 +364,14 @@ public class Main extends ActionBarActivity
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        final ConnectivityManager connManager = (ConnectivityManager) getSystemService(this.getBaseContext().CONNECTIVITY_SERVICE);
-        final NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-
         MapMaster mapMaster = MapMaster.getInstance();
         final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
-        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this.getApplicationContext());
+        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this);
 
         final HashMap<String, NodeMap> mapList = databaseHelper.getAllNodeMaps();
 
-        final boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
-        final int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));
+        boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
+        int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));
 
         if (sync_wifi == true) {
             Log.d(TAG, "Performing online update ONLY via wifi, every " + sync_frequency + " minutes");
@@ -362,50 +382,47 @@ public class Main extends ActionBarActivity
         updateTask = new TimerTask() {
             @Override
             public void run() {
+
                 /* load from database */
                 for (NodeMap map : mapList.values()) {
                     map.loadNodes();
                 }
 
                 /* load from web */
-                if (connManager.getActiveNetworkInfo() != null && (sync_wifi == false || mWifi.isConnected() == true)) {
-                    Log.d(TAG, "Performing online update. Next update at " + scheduledExecutionTime());
-                    requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject jsonObject) {
-                            try {
-                                MapMaster mapMaster = MapMaster.getInstance();
+                requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject jsonObject) {
+                        try {
+                            MapMaster mapMaster = MapMaster.getInstance();
 
-                                Iterator mapkeys = jsonObject.keys();
-                                while (mapkeys.hasNext()) {
-                                    String mapName = mapkeys.next().toString();
-                                    String mapUrl = jsonObject.getString(mapName);
+                            Iterator mapkeys = jsonObject.keys();
+                            while (mapkeys.hasNext()) {
+                                String mapName = mapkeys.next().toString();
+                                String mapUrl = jsonObject.getString(mapName);
 
-                                    NodeMap m = new NodeMap(mapName, mapUrl);
-                                    databaseHelper.addNodeMap(m);
+                                NodeMap m = new NodeMap(mapName, mapUrl);
+                                databaseHelper.addNodeMap(m);
 
-                                    // only update, if not already found in database
-                                    if (!mapList.containsKey(m.getMapName())) {
-                                        m.loadNodes();
-                                    }
+                                // only update, if not already found in database
+                                if (!mapList.containsKey(m.getMapName())) {
+                                    m.loadNodes();
                                 }
-                            } catch (JSONException e) {
-                                Log.e(TAG, e.toString());
                             }
-                            finally {
-                                requestHelper.RequestDone();
-                            }
+                        } catch (JSONException e) {
+                            Log.e(TAG, e.toString());
                         }
-                    }, new Response.ErrorListener() {
-                        @Override
-                        public void onErrorResponse(VolleyError volleyError) {
-                            Log.e(TAG, volleyError.toString());
+                        finally {
                             requestHelper.RequestDone();
                         }
-                    }));
-                } else {
-                    Log.d(TAG, "Online update is skipped. Next try at " + scheduledExecutionTime());
-                }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+                        Log.e(TAG, volleyError.toString());
+                        requestHelper.RequestDone();
+                    }
+                }));
+
             }
         };
 

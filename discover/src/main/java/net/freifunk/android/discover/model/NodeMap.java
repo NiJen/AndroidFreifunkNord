@@ -1,6 +1,8 @@
 package net.freifunk.android.discover.model;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -65,14 +67,18 @@ public class NodeMap {
     }
 
     public void loadNodes() {
-        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(null);
+        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
 
+        /* load from database */
         LoadNodesDatabaseTask loadNodesDatabaseTask = new LoadNodesDatabaseTask();
         loadNodesDatabaseTask.execute(new NodeMap[] { this });
 
 
         // TODO: can we reference to the Map from within the Callback, similar to
         // the nodeList ?
+
+
+        /* load from web */
         NodesResponse nr = new NodesResponse(this, new NodesResponse.Callbacks() {
             @Override
             public void onNodeAvailable(Node node) {
@@ -105,6 +111,8 @@ public class NodeMap {
 
         requestHelper.add(request);
     }
+
+
 
     public String details() {
         final StringBuffer sb = new StringBuffer("MapMaster{");
@@ -167,7 +175,7 @@ public class NodeMap {
 
         @Override
         protected void onPostExecute(NodeMap[] nodeMaps) {
-            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(null);
+            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
 
             for (NodeMap nodeMap : nodeMaps) {
                 Log.d(TAG, "Finished saving + " + nodeMap.getMapName());
