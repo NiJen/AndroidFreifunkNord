@@ -58,6 +58,16 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
         try {
             JSONArray node_list = jsonObject.getJSONArray("nodes");
             for (int i = 0; i < node_list.length(); i++) {
+
+                String name = "";
+                String hardware = "";
+                String firmware = "";
+                int clientCount = -1;
+                int uptime = -1;
+                double rx_bytes = -1;
+                double tx_bytes = -1;
+                double loadavg = -1;
+
                 JSONObject node = node_list.getJSONObject(i);
                 List<String> mac_list = new ArrayList<String>(1);
                 // MAC
@@ -72,11 +82,41 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                    mac_list.add(" ");
                 }
                 // Name
-                String name = ((String) node.get("name")).trim();
+                if (node.has("name") && !node.isNull("name")) {
+                    name = ((String) node.get("name")).trim();
+                }
 
-                // Firmware
-                String firmware = String.valueOf(node.get("firmware")).trim();
+                // Hardware
+                if (node.has("hardware") && !node.isNull("hardware")) {
+                    hardware = ((String) node.get("hardware")).trim();
+                }
+                else if (node.has("model") && !node.isNull("model")) {
+                    hardware = ((String) node.get("model")).trim();
+                }
 
+                if (node.has("firmware") && !node.isNull("firmware")) {
+                    firmware = String.valueOf(node.get("firmware")).trim();
+                }
+
+                if (node.has("clientcount") && !node.isNull("clientcount")) {
+                    clientCount = node.getInt("clientcount");
+                }
+
+                if (node.has("rx_bytes") && !node.isNull("rx_bytes")) {
+                    rx_bytes = node.getDouble("rx_bytes");
+                }
+
+                if (node.has("tx_bytes") && !node.isNull("tx_bytes")) {
+                    tx_bytes = node.getDouble("tx_bytes");
+                }
+
+                if (node.has("uptime") && !node.isNull("uptime")) {
+                    uptime = node.getInt("uptime");
+                }
+
+                if (node.has("loadavg") && !node.isNull("loadavg")) {
+                    loadavg = node.getDouble("loadavg");
+                }
                 // Flags
                 Map<String, String> flags = new HashMap<String, String>();
                 JSONObject jflags = node.getJSONObject("flags");
@@ -100,7 +140,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 // Id
                 String id = ((String) node.get("id")).trim();
 
-                Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, firmware, flags, pos, id);
+                Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, hardware, firmware, flags, pos, id, clientCount, rx_bytes, tx_bytes, uptime, loadavg);
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }

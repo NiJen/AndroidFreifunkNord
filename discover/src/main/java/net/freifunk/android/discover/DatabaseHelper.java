@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 9;
     private static final String DATABASE_NAME = "freifunk.db";
     public static final String TABLE_NODES = "nodes";
     public static final String TABLE_MAPS = "maps";
@@ -32,9 +32,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_NODES_ID = "_id";
     public static final String COLUMN_NODES_MAPNAME = "mapname";
     public static final String COLUMN_NODES_NAME = "name";
+    public static final String COLUMN_NODES_HARDWARE = "hardware";
     public static final String COLUMN_NODES_FIRMWARE = "firmware";
     public static final String COLUMN_NODES_GATEWAY = "gateway";
     public static final String COLUMN_NODES_CLIENT = "client";
+    public static final String COLUMN_NODES_CLIENTCOUNT = "clientcount";
+    public static final String COLUMN_NODES_RXBYTES = "rx_bytes";
+    public static final String COLUMN_NODES_TXBYTES = "tx_bytes";
+    public static final String COLUMN_NODES_UPTIME = "uptime";
+    public static final String COLUMN_NODES_LOADAVG = "loadavg";
     public static final String COLUMN_NODES_LAT = "lat";
     public static final String COLUMN_NODES_LNG = "lng";
     public static final String COLUMN_NODES_NODEID = "id";
@@ -68,12 +74,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_NODES_ID + " INTEGER PRIMARY KEY," +
                 COLUMN_NODES_MAPNAME + " TEXT," +
                 COLUMN_NODES_NAME + " TEXT," +
+                COLUMN_NODES_HARDWARE + " TEXT," +
                 COLUMN_NODES_FIRMWARE + " TEXT," +
                 COLUMN_NODES_GATEWAY + " TEXT," +
                 COLUMN_NODES_CLIENT + " TEXT," +
                 COLUMN_NODES_LAT + " TEXT," +
                 COLUMN_NODES_LNG + " TEXT," +
                 COLUMN_NODES_NODEID + " TEXT," +
+                COLUMN_NODES_CLIENTCOUNT + " INTEGER," +
+                COLUMN_NODES_RXBYTES + " DOUBLE," +
+                COLUMN_NODES_TXBYTES + " DOUBLE," +
+                COLUMN_NODES_UPTIME + " INTEGER," +
+                COLUMN_NODES_LOADAVG + " DOUBLE," +
                 COLUMN_NODES_LASTUPDATE + " INTEGER" +
                 ")";
         db.execSQL(CREATE_NODE_TABLE);
@@ -192,11 +204,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String client = flags.get("client");
 
         values.put(COLUMN_NODES_FIRMWARE, node.getFirmware());
+        values.put(COLUMN_NODES_HARDWARE, node.getHardware());
         values.put(COLUMN_NODES_GATEWAY, gateway);
         values.put(COLUMN_NODES_CLIENT, client);
         values.put(COLUMN_NODES_LAT, String.valueOf(node.getGeo().latitude));
         values.put(COLUMN_NODES_LNG, String.valueOf(node.getGeo().longitude));
         values.put(COLUMN_NODES_NODEID, node.getId());
+        values.put(COLUMN_NODES_CLIENTCOUNT, node.getClientCount());
+        values.put(COLUMN_NODES_RXBYTES, node.getRxBytes());
+        values.put(COLUMN_NODES_TXBYTES, node.getTxBytes());
+        values.put(COLUMN_NODES_UPTIME, node.getUptime());
+        values.put(COLUMN_NODES_LOADAVG, node.getLoadavg());
         values.put(COLUMN_NODES_LASTUPDATE, new Date().getTime());
 
         if (  findNode(node.getId(), node.getMapname()) == null) {
@@ -207,9 +225,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.insert(TABLE_NODES, null, values);
         }
         else  {
-            Log.d("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
+           Log.d("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
             db.update(TABLE_NODES, values, COLUMN_NODES_NODEID + " = \"" + node.getId() + "\" AND  " + COLUMN_NODES_MAPNAME + " = \"" + node.getMapname() + "\"", null);
         }
+
     }
 
 
@@ -237,10 +256,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 node = new Node(new ArrayList<String>(1),
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_MAPNAME)),
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_NAME)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_HARDWARE)),
                         cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_FIRMWARE)),
                         flags,
                         geo,
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_ID)));
+                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_ID)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_CLIENTCOUNT)),
+                        cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_RXBYTES)),
+                        cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_TXBYTES)),
+                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_UPTIME)),
+                        cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_LOADAVG))
+                        );
             }
             else
             {
@@ -278,10 +304,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     Node node = new Node(new ArrayList<String>(1),
                             mapName,
                             cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_NAME)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_HARDWARE)),
                             cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_FIRMWARE)),
                             flags,
                             geo,
-                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_NODEID)));
+                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_ID)),
+                            cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_CLIENTCOUNT)),
+                            cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_RXBYTES)),
+                            cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_TXBYTES)),
+                            cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_UPTIME)),
+                            cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_LOADAVG))
+                    );
 
                     nodeList.add(node);
                 } while (cursor.moveToNext());

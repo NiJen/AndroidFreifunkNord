@@ -41,18 +41,32 @@ public class Node implements ClusterItem {
     private String mapname;
     private String name;
     private String firmware;
+    private String hardware;
+    private int clientCount;
+    private double rx_bytes;
+    private double tx_bytes;
+    private int uptime;
+    private double loadavg;
+
+
     private Map<String, String> flags;
     private LatLng geo;
     private String id;
 
-    public Node(List<String> macs, String mapname, String name, String firmware, Map<String, String> flags, LatLng geo, String id) {
+    public Node(List<String> macs, String mapname, String name, String hardware, String firmware, Map<String, String> flags, LatLng geo, String id, int clientCount, double rx_bytes, double tx_bytes, int uptime, double loadavg) {
         this.macs = macs;
         this.mapname = mapname;
         this.name = name;
+        this.hardware = hardware;
         this.firmware = firmware;
         this.flags = flags;
         this.geo = geo;
         this.id = id;
+        this.clientCount = clientCount;
+        this.rx_bytes = rx_bytes;
+        this.tx_bytes = tx_bytes;
+        this.uptime = uptime;
+        this.loadavg = loadavg;
     }
     
     @Override
@@ -130,4 +144,31 @@ public class Node implements ClusterItem {
     public void setId(String id) {
         this.id = id;
     }
+
+
+
+    public String getHardware() {
+        return hardware;
+    }
+
+    public int getClientCount() {
+        return clientCount;
+    }
+
+    public double getRxBytes() {
+        return rx_bytes;
+    }
+
+    public double getTxBytes() {
+        return tx_bytes;
+    }
+
+    public int getUptime() {
+        return uptime;
+    }
+
+    public double getLoadavg() {
+        return loadavg;
+    }
+
 }
