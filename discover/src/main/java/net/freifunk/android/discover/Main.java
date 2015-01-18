@@ -222,7 +222,6 @@ public class Main extends ActionBarActivity
 
             /* check whether requests are already running */
             if (RequestQueueHelper.getInstance().size() > 0) {
-                Log.e(TAG,"SET REFRESH SPINNER");
                 setRefreshActionButtonState(true);
             }
 
