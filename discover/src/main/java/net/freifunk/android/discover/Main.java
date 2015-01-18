@@ -219,6 +219,13 @@ public class Main extends ActionBarActivity
             // decide what to show in the action bar.
             getMenuInflater().inflate(R.menu.main, menu);
             restoreActionBar();
+
+            /* check whether requests are already running */
+            if (RequestQueueHelper.getInstance().size() > 0) {
+                Log.e(TAG,"SET REFRESH SPINNER");
+                setRefreshActionButtonState(true);
+            }
+
             return true;
         }
         return super.onCreateOptionsMenu(menu);
@@ -226,11 +233,8 @@ public class Main extends ActionBarActivity
 
     public void setRefreshActionButtonState(final boolean refreshing) {
 
-        Log.e(TAG, "setRefreshActionButtonState REACHED");
-
         if (optionsMenu != null) {
-            final MenuItem refreshItem = optionsMenu
-                    .findItem(R.id.action_reload);
+            final MenuItem refreshItem = optionsMenu.findItem(R.id.action_reload);
             if (refreshItem != null) {
                 if (refreshing) {
                     refreshItem.setActionView(R.layout.activity_main_indeterminate_progress);
