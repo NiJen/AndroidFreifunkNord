@@ -24,12 +24,11 @@ import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 9;
+    private static final int DATABASE_VERSION = 11;
     private static final String DATABASE_NAME = "freifunk.db";
     public static final String TABLE_NODES = "nodes";
     public static final String TABLE_MAPS = "maps";
 
-    public static final String COLUMN_NODES_ID = "_id";
     public static final String COLUMN_NODES_MAPNAME = "mapname";
     public static final String COLUMN_NODES_NAME = "name";
     public static final String COLUMN_NODES_HARDWARE = "hardware";
@@ -71,7 +70,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATE_NODE_TABLE = "CREATE TABLE " +
                 TABLE_NODES + "(" +
-                COLUMN_NODES_ID + " INTEGER PRIMARY KEY," +
                 COLUMN_NODES_MAPNAME + " TEXT," +
                 COLUMN_NODES_NAME + " TEXT," +
                 COLUMN_NODES_HARDWARE + " TEXT," +
@@ -107,59 +105,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
-
     public void addNodeMap(NodeMap map) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
-        values.put(COLUMN_MAPS_URL, map.getMapUrl() );
+        values.put(COLUMN_MAPS_URL, map.getMapUrl());
         values.put(COLUMN_MAPS_LASTUPDATE, new Date().getTime());
 
-        if (findNodeMap(map.getMapName()) == null) {
+        int updateResult = db.update(TABLE_MAPS, values, COLUMN_MAPS_MAPNAME + " = \"" + map.getMapName() + "\"", null);
+
+        if (updateResult == 0) {
             values.put(COLUMN_MAPS_MAPNAME, map.getMapName());
 
-            Log.d("DatabaseHelper", "NodeMap added " + map.getMapName() + "/" + map.getMapUrl());
+            Log.v("DatabaseHelper", "NodeMap added " + map.getMapName() + "/" + map.getMapUrl());
             db.insert(TABLE_MAPS, null, values);
-        }
-        else {
-            Log.d("DatabaseHelper", "NodeMap updated " + map.getMapName() + "/" + map.getMapUrl());
-            db.update(TABLE_MAPS, values, COLUMN_MAPS_MAPNAME + " = \"" + map.getMapName() + "\"", null);
+        } else {
+            Log.v("DatabaseHelper", "NodeMap updated " + map.getMapName() + "/" + map.getMapUrl());
         }
     }
-
-
-
-    public NodeMap findNodeMap(String mapName) {
-        String query = "Select * FROM " + TABLE_MAPS + "  WHERE " + COLUMN_MAPS_MAPNAME + " = \"" + mapName + "\"";
-
-        SQLiteDatabase db = null;
-        Cursor cursor = null;
-        NodeMap map = null;
-
-        try {
-            db = this.getReadableDatabase();
-            cursor = db.rawQuery(query, null);
-
-            if (cursor.moveToFirst()) {
-                cursor.moveToFirst();
-
-                map = new NodeMap(
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MAPS_MAPNAME)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MAPS_URL)));
-            }
-            else
-            {
-                Log.e("DatabaseHelper", "Map with name " + mapName+ " not found.");
-            }
-        }
-        finally {
-            if (cursor != null)
-                cursor.close();
-        }
-        return map;
-    }
-
 
 
     public HashMap<String, NodeMap> getAllNodeMaps() {
@@ -182,8 +146,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     mapList.put(map.getMapName(), map);
                 } while (cursor.moveToNext());
             }
-        }
-        finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }
@@ -191,7 +154,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return mapList;
     }
-
 
 
     public void addNode(Node node) {
@@ -217,72 +179,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_NODES_LOADAVG, node.getLoadavg());
         values.put(COLUMN_NODES_LASTUPDATE, new Date().getTime());
 
-        if (  findNode(node.getId(), node.getMapname()) == null) {
+        /* try update first */
+        int result = db.update(TABLE_NODES, values, COLUMN_NODES_NAME + " = \"" + node.getName() + "\" AND  " + COLUMN_NODES_MAPNAME + " = \"" + node.getMapname() + "\"", null);
+
+        if (result == 0) {
             values.put(COLUMN_NODES_MAPNAME, node.getMapname());
             values.put(COLUMN_NODES_NAME, node.getName());
 
             Log.d("DatabaseHelper", "Node added " + node.getId() + "/" + node.getName());
             db.insert(TABLE_NODES, null, values);
-        }
-        else  {
-           Log.d("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
-            db.update(TABLE_NODES, values, COLUMN_NODES_NODEID + " = \"" + node.getId() + "\" AND  " + COLUMN_NODES_MAPNAME + " = \"" + node.getMapname() + "\"", null);
+        } else {
+            Log.d("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
         }
 
-    }
-
-
-    public Node findNode(String nodeID, String mapName) {
-        String query = "Select * FROM " + TABLE_NODES + "  WHERE " + COLUMN_NODES_NODEID + " = \"" + nodeID + "\" AND  " + COLUMN_NODES_MAPNAME + " = \"" + mapName + "\"";
-
-        SQLiteDatabase db = null;
-        Cursor cursor = null;
-        Node node = null;
-
-        try {
-            db = this.getReadableDatabase();
-            cursor = db.rawQuery(query, null);
-
-            if (cursor.moveToFirst()) {
-                cursor.moveToFirst();
-
-                Map<String, String> flags = new HashMap<String, String>();
-                flags.put("gateway", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_GATEWAY)));
-                flags.put("client", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_CLIENT)));
-
-                LatLng geo = new LatLng(Double.parseDouble(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_LAT))),
-                        Double.parseDouble(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_LNG))));
-
-                node = new Node(new ArrayList<String>(1),
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_MAPNAME)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_NAME)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_HARDWARE)),
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_FIRMWARE)),
-                        flags,
-                        geo,
-                        cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_ID)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_CLIENTCOUNT)),
-                        cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_RXBYTES)),
-                        cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_TXBYTES)),
-                        cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_UPTIME)),
-                        cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_LOADAVG))
-                        );
-            }
-            else
-            {
-                Log.e("DatabaseHelper", "Node with ID " + nodeID + "/" + mapName +" not found.");
-            }
-        }
-        finally {
-            if (cursor != null)
-                cursor.close();
-       }
-        return node;
     }
 
 
     public List<Node> getAllNodesForMap(String mapName) {
-        String query = "Select * FROM " + TABLE_NODES + " WHERE "+ COLUMN_NODES_MAPNAME + "=\"" + mapName + "\"";
+        String query = "Select * FROM " + TABLE_NODES + " WHERE " + COLUMN_NODES_MAPNAME + "=\"" + mapName + "\"";
         SQLiteDatabase db = null;
         List<Node> nodeList = null;
         Cursor cursor = null;
@@ -308,7 +222,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_FIRMWARE)),
                             flags,
                             geo,
-                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_ID)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_NODEID)),
                             cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_CLIENTCOUNT)),
                             cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_RXBYTES)),
                             cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_TXBYTES)),
@@ -319,8 +233,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     nodeList.add(node);
                 } while (cursor.moveToNext());
             }
-        }
-        finally {
+        } finally {
             if (cursor != null) {
                 cursor.close();
             }
@@ -329,5 +242,4 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return nodeList;
 
     }
-
 }
