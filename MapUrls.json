@@ -5,5 +5,5 @@
 	"lübeck" : "http://map.luebeck.freifunk.net/nodes.json",
 	"münster" : "https://freifunk-muenster.de/map/nodes.json",
 	"paderborn" : "http://map.paderborn.freifunk.net/nodes.json",
-	"uelzen" : "http://uegw1.freifunk-uelzen.de/map/nodes.json"
+	"uelzen" : "http://map.freifunk-uelzen.de/nodes.json"
 }
