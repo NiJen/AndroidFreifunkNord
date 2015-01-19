@@ -48,7 +48,6 @@ public class Node implements ClusterItem {
     private int uptime;
     private double loadavg;
 
-
     private Map<String, String> flags;
     private LatLng geo;
     private String id;
@@ -169,6 +168,14 @@ public class Node implements ClusterItem {
 
     public double getLoadavg() {
         return loadavg;
+    }
+
+    public Boolean isOnline() {
+        if (flags.containsKey("online")) {
+            return Boolean.parseBoolean(flags.get("online"));
+        }
+
+        return null;
     }
 
 }

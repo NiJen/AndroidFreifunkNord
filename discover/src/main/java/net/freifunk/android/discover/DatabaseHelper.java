@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 11;
+    private static final int DATABASE_VERSION = 13;
     private static final String DATABASE_NAME = "freifunk.db";
     public static final String TABLE_NODES = "nodes";
     public static final String TABLE_MAPS = "maps";
@@ -35,6 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_NODES_FIRMWARE = "firmware";
     public static final String COLUMN_NODES_GATEWAY = "gateway";
     public static final String COLUMN_NODES_CLIENT = "client";
+    public static final String COLUMN_NODES_ONLINE = "online";
     public static final String COLUMN_NODES_CLIENTCOUNT = "clientcount";
     public static final String COLUMN_NODES_RXBYTES = "rx_bytes";
     public static final String COLUMN_NODES_TXBYTES = "tx_bytes";
@@ -76,14 +77,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COLUMN_NODES_FIRMWARE + " TEXT," +
                 COLUMN_NODES_GATEWAY + " TEXT," +
                 COLUMN_NODES_CLIENT + " TEXT," +
+                COLUMN_NODES_ONLINE + " TEXT," +
                 COLUMN_NODES_LAT + " TEXT," +
                 COLUMN_NODES_LNG + " TEXT," +
                 COLUMN_NODES_NODEID + " TEXT," +
                 COLUMN_NODES_CLIENTCOUNT + " INTEGER," +
-                COLUMN_NODES_RXBYTES + " DOUBLE," +
-                COLUMN_NODES_TXBYTES + " DOUBLE," +
+                COLUMN_NODES_RXBYTES + " REAL," +
+                COLUMN_NODES_TXBYTES + " REAL," +
                 COLUMN_NODES_UPTIME + " INTEGER," +
-                COLUMN_NODES_LOADAVG + " DOUBLE," +
+                COLUMN_NODES_LOADAVG + " REAL," +
                 COLUMN_NODES_LASTUPDATE + " INTEGER" +
                 ")";
         db.execSQL(CREATE_NODE_TABLE);
@@ -164,11 +166,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Map<String, String> flags = node.getFlags();
         String gateway = flags.get("gateway");
         String client = flags.get("client");
+        String online = flags.get("online");
 
         values.put(COLUMN_NODES_FIRMWARE, node.getFirmware());
         values.put(COLUMN_NODES_HARDWARE, node.getHardware());
         values.put(COLUMN_NODES_GATEWAY, gateway);
         values.put(COLUMN_NODES_CLIENT, client);
+        values.put(COLUMN_NODES_ONLINE, online);
         values.put(COLUMN_NODES_LAT, String.valueOf(node.getGeo().latitude));
         values.put(COLUMN_NODES_LNG, String.valueOf(node.getGeo().longitude));
         values.put(COLUMN_NODES_NODEID, node.getId());
@@ -186,10 +190,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             values.put(COLUMN_NODES_MAPNAME, node.getMapname());
             values.put(COLUMN_NODES_NAME, node.getName());
 
-            Log.d("DatabaseHelper", "Node added " + node.getId() + "/" + node.getName());
+            Log.v("DatabaseHelper", "Node added " + node.getId() + "/" + node.getName());
             db.insert(TABLE_NODES, null, values);
         } else {
-            Log.d("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
+            Log.v("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
         }
 
     }
@@ -211,6 +215,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     Map<String, String> flags = new HashMap<String, String>();
                     flags.put("gateway", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_GATEWAY)));
                     flags.put("client", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_CLIENT)));
+                    flags.put("online", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_ONLINE)));
 
                     LatLng geo = new LatLng(Double.parseDouble(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_LAT))),
                             Double.parseDouble(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NODES_LNG))));
