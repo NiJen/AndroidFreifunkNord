@@ -80,8 +80,7 @@ public class Main extends ActionBarActivity
     private static final int RESULT_SETTINGS = 1;
     private static final String TAG = "Main";
 
-    private static final Collection<Node> nodes = Collections.synchronizedSet(new HashSet<Node>());
-    private static final List<Community> communities = Collections.synchronizedList(new ArrayList<Community>());
+    private static HashMap<String, NodeMap> mapList = null;
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
@@ -128,6 +127,28 @@ public class Main extends ActionBarActivity
         mNavigationDrawerFragment.setUp(
                 R.id.navigation_drawer,
                 (DrawerLayout) findViewById(R.id.drawer_layout));
+
+
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
+
+        mapList = new HashMap<String, NodeMap>();
+
+        for(NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
+            String mapUrl = sharedPrefs.getString(nm.getMapName(), null);
+
+            if (mapUrl != null)
+            {
+                Log.i(TAG, "Override mapUrl of " + nm.getMapName() + " with value " + mapUrl);
+                nm.setMapUrl(mapUrl);
+            }
+            else
+            {
+                Log.i(TAG, "no value retrieved for map " + nm.getMapName());
+            }
+
+            mapList.put(nm.getMapName(), nm);
+        }
 
         updateDirectory();
         updateMaps();
@@ -267,6 +288,13 @@ public class Main extends ActionBarActivity
 
             case R.id.action_settings:
                 Intent i = new Intent(this, SettingsActivity.class);
+                ArrayList <NodeMap> addyExtras = new ArrayList <NodeMap>();
+
+                for (NodeMap nm : mapList.values()) {
+                    addyExtras.add(nm);
+                }
+
+                i.putParcelableArrayListExtra( "communities", addyExtras );
                 startActivityForResult(i, RESULT_SETTINGS);
                 return true;
          }
@@ -368,10 +396,8 @@ public class Main extends ActionBarActivity
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         MapMaster mapMaster = MapMaster.getInstance();
-        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
         final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this);
-
-        final HashMap<String, NodeMap> mapList = databaseHelper.getAllNodeMaps();
+        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
 
         boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
         int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));

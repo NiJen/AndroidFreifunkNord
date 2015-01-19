@@ -4,6 +4,8 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
@@ -20,7 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Created by bjoern petri on 12/4/14.
  */
-public class NodeMap {
+public class NodeMap implements Parcelable {
 
     private static final String TAG = "NodeMap";
 
@@ -38,12 +40,22 @@ public class NodeMap {
         this.addedToMap = false;
     }
 
+
+    private NodeMap(Parcel parcel) {
+        this.mapName = parcel.readString();
+        this.mapUrl = parcel.readString();
+    }
+
     public String getMapName() {
         return this.mapName;
     }
 
     public String getMapUrl() {
         return this.mapUrl;
+    }
+
+    public void setMapUrl(String mapUrl) {
+        this.mapUrl = mapUrl;
     }
 
     public CopyOnWriteArrayList<Node> getNodes() {
@@ -98,8 +110,9 @@ public class NodeMap {
                     saveNodesDatabaseTask.execute(new NodeMap[]{map});
                 }
                 finally {
+
+                    Log.d(TAG, "NodeResponse for  + " + map.getMapName() + " finished.");
                     // we set the RequestDone when the saveNodesDatabaseTask has been done
-                    //  requestHelper.RequestDone();
                 }
             }
         });
@@ -122,6 +135,29 @@ public class NodeMap {
         return sb.toString();
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(mapName);
+        parcel.writeString(mapUrl);
+    }
+
+    // this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
+    public static final Parcelable.Creator<NodeMap> CREATOR = new Parcelable.Creator<NodeMap>() {
+        public NodeMap createFromParcel(Parcel in) {
+            return new NodeMap(in);
+        }
+
+        public NodeMap[] newArray(int size) {
+            return new NodeMap[size];
+        }
+    };
+
+
 
     private class LoadNodesDatabaseTask extends AsyncTask<NodeMap, Object, NodeMap[]> {
 
@@ -141,9 +177,11 @@ public class NodeMap {
         protected void onPostExecute(NodeMap[] nodeMaps) {
             MapMaster mapMaster = MapMaster.getInstance();
             for (NodeMap nodeMap : nodeMaps) {
-                Log.e(TAG, "Finished database loading  " + nodeMap.getMapName());
+                int size = nodeMap.getNodes().size();
+                Log.e(TAG, "Finished database loading  " + nodeMap.getMapName() + " (" + size + " entries)");
+
                 // only update if there are nodes available
-                if (nodeMap.getNodes().size() > 0) {
+                if (size > 0) {
                     mapMaster.addMap(nodeMap);
                 }
                 else {

@@ -8,6 +8,10 @@
     <string name="pref_description_wifi">Ausschalten um Daten auch mit mobilen Daten zu aktualisieren</string>
 
     <string name="pref_title_sync_frequency">Update Interval</string>
+
+    <string name="pref_title_communities">Communities</string>
+
+
     <string-array name="pref_sync_frequency_titles">
         <item>5 Minuten</item>
         <item>10 Minuten</item>

@@ -20,4 +20,7 @@
         android:positiveButtonText="@null" />
 
 
-</PreferenceScreen>
+    <PreferenceScreen android:key="communities" android:title="@string/pref_title_communities">
+    </PreferenceScreen>
+
+ </PreferenceScreen>

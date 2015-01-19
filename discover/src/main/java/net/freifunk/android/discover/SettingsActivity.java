@@ -22,24 +22,32 @@ package net.freifunk.android.discover;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.preference.PreferenceScreen;
 import android.preference.RingtonePreference;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.support.v4.app.NavUtils;
 
 
+import net.freifunk.android.discover.model.NodeMap;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -65,7 +73,28 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        addPreferencesFromResource(R.xml.pref_data_sync);
+
+        // get data via the key
+        ArrayList<NodeMap> nodeMapArrayList = getIntent().getParcelableArrayListExtra("communities");
+        PreferenceScreen communities = (PreferenceScreen) findPreference("communities");
+
+        if (nodeMapArrayList != null && communities != null) {
+            for (NodeMap nm : nodeMapArrayList) {
+                EditTextPreference editTextPreference = new EditTextPreference(this);
+
+                //make sure each key is unique
+                editTextPreference.setKey(nm.getMapName());
+                editTextPreference.setTitle(nm.getMapName());
+
+                editTextPreference.setText(nm.getMapUrl());
+                communities.addPreference(editTextPreference);
+            }
+        }
+
         setupActionBar();
+
     }
 
     /**
@@ -101,26 +130,9 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-        setupSimplePreferencesScreen();
     }
 
-    /**
-     * Shows the simplified settings UI if the device configuration if the
-     * device configuration dictates that a simplified, single-pane UI should be
-     * shown.
-     */
-    private void setupSimplePreferencesScreen() {
-        if (!isSimplePreferences(this)) {
-            return;
-        }
 
-        // Add 'data and sync' preferences, and a corresponding header.
-      //  PreferenceCategory fakeHeader = new PreferenceCategory(this);
-      //  fakeHeader.setTitle(R.string.pref_header_data_sync);
-      //  getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_data_sync);
-    }
 
     /** {@inheritDoc} */
     @Override
@@ -220,6 +232,8 @@ public class SettingsActivity extends PreferenceActivity {
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+
+
             addPreferencesFromResource(R.xml.pref_data_sync);
 
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
@@ -228,6 +242,8 @@ public class SettingsActivity extends PreferenceActivity {
             // guidelines.
             bindPreferenceSummaryToValue(findPreference("sync_wifi"));
             bindPreferenceSummaryToValue(findPreference("sync_frequency"));
+
+
         }
     }
 }
