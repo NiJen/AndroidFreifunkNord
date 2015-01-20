@@ -20,7 +20,14 @@
         android:positiveButtonText="@null" />
 
 
-    <PreferenceScreen android:key="communities" android:title="@string/pref_title_communities">
+    <PreferenceScreen android:key="screen_communities" android:title="@string/pref_title_communities">
+        <Preference
+            android:key="communities_reset"
+            android:summary="Setzt geänderte URLs zurück"
+            android:title="Communities zurücksetzen" />
+
+        <PreferenceCategory
+            android:key="communities" android:title="@string/pref_title_communities" />
     </PreferenceScreen>
 
  </PreferenceScreen>

@@ -23,6 +23,7 @@ package net.freifunk.android.discover;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -48,6 +49,7 @@ import android.support.v4.app.NavUtils;
 import net.freifunk.android.discover.model.NodeMap;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -76,9 +78,39 @@ public class SettingsActivity extends PreferenceActivity {
 
         addPreferencesFromResource(R.xml.pref_data_sync);
 
+        findPreference("communities_reset").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+
+                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
+
+                SharedPreferences.Editor editor = settings.edit();
+
+                for(NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
+                    String res = settings.getString(nm.getMapName(), "null");
+
+                    if (res != null)
+                    {
+                        editor.putString(nm.getMapName(), nm.getMapUrl());
+
+                        EditTextPreference editTextPreference  = (EditTextPreference) findPreference(nm.getMapName());
+
+                        if (editTextPreference != null) {
+                            editTextPreference.setText(nm.getMapUrl());
+                        }
+                    }
+                }
+
+                editor.commit();
+
+                return true;
+            }
+        });
+
         // get data via the key
         ArrayList<NodeMap> nodeMapArrayList = getIntent().getParcelableArrayListExtra("communities");
-        PreferenceScreen communities = (PreferenceScreen) findPreference("communities");
+        PreferenceCategory communities = (PreferenceCategory) findPreference("communities");
 
         if (nodeMapArrayList != null && communities != null) {
             for (NodeMap nm : nodeMapArrayList) {
@@ -111,6 +143,7 @@ public class SettingsActivity extends PreferenceActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+
         if (id == android.R.id.home) {
             // This ID represents the Home or Up button. In the case of this
             // activity, the Up button is shown. Use NavUtils to allow users
@@ -124,6 +157,7 @@ public class SettingsActivity extends PreferenceActivity {
             NavUtils.navigateUpFromSameTask(this);
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 
