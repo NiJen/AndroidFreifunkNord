@@ -37,4 +37,13 @@
         <item>-1</item>
     </string-array>
 
-</resources>
+    <string name="info_desc_lastUpd">Stand</string>
+    <string name="info_desc_community">Community</string>
+    <string name="info_desc_hardware">Hardware</string>
+    <string name="info_desc_firmware">Firmware</string>
+    <string name="info_desc_rxtx">RX/TX</string>
+    <string name="info_desc_uptime">Uptime</string>
+    <string name="info_desc_clients">Clients</string>
+    <string name="info_desc_loadavg">Load</string>
+
+    </resources>

@@ -51,8 +51,9 @@ public class Node implements ClusterItem {
     private Map<String, String> flags;
     private LatLng geo;
     private String id;
+    private long lastUpdate;
 
-    public Node(List<String> macs, String mapname, String name, String hardware, String firmware, Map<String, String> flags, LatLng geo, String id, int clientCount, double rx_bytes, double tx_bytes, int uptime, double loadavg) {
+    public Node(List<String> macs, String mapname, String name, String hardware, String firmware, Map<String, String> flags, LatLng geo, String id, int clientCount, double rx_bytes, double tx_bytes, int uptime, double loadavg, long lastUpdate) {
         this.macs = macs;
         this.mapname = mapname;
         this.name = name;
@@ -66,6 +67,7 @@ public class Node implements ClusterItem {
         this.tx_bytes = tx_bytes;
         this.uptime = uptime;
         this.loadavg = loadavg;
+        this.lastUpdate = lastUpdate;
     }
     
     @Override
@@ -169,6 +171,8 @@ public class Node implements ClusterItem {
     public double getLoadavg() {
         return loadavg;
     }
+
+    public long getLastUpdate() { return  lastUpdate; }
 
     public Boolean isOnline() {
         if (flags.containsKey("online")) {

@@ -232,7 +232,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_RXBYTES)),
                             cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_TXBYTES)),
                             cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NODES_UPTIME)),
-                            cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_LOADAVG))
+                            cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_NODES_LOADAVG)),
+                            cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_NODES_LASTUPDATE))
                     );
 
                     nodeList.add(node);

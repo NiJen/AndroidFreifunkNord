@@ -33,6 +33,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -140,7 +141,7 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
                 // Id
                 String id = ((String) node.get("id")).trim();
 
-                Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, hardware, firmware, flags, pos, id, clientCount, rx_bytes, tx_bytes, uptime, loadavg);
+                Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, hardware, firmware, flags, pos, id, clientCount, rx_bytes, tx_bytes, uptime, loadavg, new Date().getTime());
                 Node.nodes.add(n);
                 mCallback.onNodeAvailable(n);
             }

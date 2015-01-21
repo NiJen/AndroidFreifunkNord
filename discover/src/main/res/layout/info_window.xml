@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/tableLayout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
+    <TableRow
+        android:id="@+id/tablerow_name"
+        android:layout_marginBottom="5dip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+
+        <ImageView
+            android:id="@+id/iv_online"
+            android:src="@drawable/ic_action_network_wifi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:paddingLeft="5dip"
+            android:textSize="24sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_lastupd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip" >
+
+        <TextView
+            android:id="@+id/tv_desc_lastupd"
+            android:text="@string/info_desc_lastUpd"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_lastupd"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_community"
+            android:text="@string/info_desc_community"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_mapname"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_hardware"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_hardware"
+            android:text="@string/info_desc_hardware"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_hardware"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </TableRow>
+
+
+    <TableRow
+        android:id="@+id/tablerow_firmware"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_firmware"
+            android:text="@string/info_desc_firmware"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+        <TextView
+            android:id="@+id/tv_firmware"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_clients"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_clients"
+            android:text="@string/info_desc_clients"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_clientcount"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_rxtx"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_rxtx"
+            android:text="@string/info_desc_rxtx"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_rxtx"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_uptime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_uptime"
+            android:text="@string/info_desc_uptime"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_uptime"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+    <TableRow
+        android:id="@+id/tablerow_loadavg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="2dip">
+
+        <TextView
+            android:id="@+id/tv_desc_loadavg"
+            android:text="@string/info_desc_loadavg"
+            android:textSize="12sp"
+            android:textStyle="bold"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tv_loadavg"
+            android:paddingLeft="5dip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </TableRow>
+
+</TableLayout>
