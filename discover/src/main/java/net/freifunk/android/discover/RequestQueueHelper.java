@@ -52,7 +52,7 @@ public class RequestQueueHelper {
             RequestQueueHelper = new RequestQueueHelper(main.getApplicationContext());
             RequestQueueHelper.context = main.getApplicationContext();
             RequestQueueHelper.sharedPrefs = PreferenceManager.getDefaultSharedPreferences(main);
-            RequestQueueHelper.connManager = (ConnectivityManager) main.getSystemService(main.getBaseContext().CONNECTIVITY_SERVICE);            ;
+            RequestQueueHelper.connManager = (ConnectivityManager) main.getSystemService(main.getBaseContext().CONNECTIVITY_SERVICE);
             RequestQueueHelper.main = main;
             RequestQueueHelper.requestInProgress = new AtomicInteger(0);
         }
@@ -65,7 +65,7 @@ public class RequestQueueHelper {
         NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
 
-        if (connManager.getActiveNetworkInfo() != null && (sync_wifi == false || mWifi.isConnected() == true)) {
+        if (connManager.getActiveNetworkInfo() != null && (sync_wifi || mWifi.isConnected())) {
             if (requestInProgress.incrementAndGet() > 0) {
                 main.runOnUiThread(new Runnable() {
                     public void run() {

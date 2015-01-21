@@ -127,6 +127,7 @@ public class NodeMap implements Parcelable {
 
 
 
+    @SuppressWarnings("StringBufferReplaceableByString")
     public String details() {
         final StringBuffer sb = new StringBuffer("MapMaster{");
         sb.append("name='").append(mapName).append('\'');

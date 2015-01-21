@@ -50,7 +50,6 @@ import com.google.maps.android.MarkerManager;
 import com.google.maps.android.clustering.Cluster;
 import com.google.maps.android.ui.IconGenerator;
 
-import net.freifunk.android.discover.model.Community;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.NodesResponse;
@@ -116,9 +115,7 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
             mClusterManager.clearItems();
 
             String type = (String) getArguments().get(ARG_TYPE);
-            if (type.equals(COMMUNITY_TYPE)) {
-                createCommunityMap();
-            } else if (type.equals(NODES_TYPE)) {
+            if (type.equals(NODES_TYPE)) {
 
                 for (NodeMap m : MapMaster.getInstance().getMaps()) {
                     m.setAddedToMap(false);
@@ -174,27 +171,6 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
     }
 
 
-    private void createCommunityMap() {
-        markerMap = new HashMap<Marker, Object>();
-        getMap().setMyLocationEnabled(true);
-        LatLng germany = new LatLng(51, 9);
-        getMap().animateCamera(CameraUpdateFactory.newLatLngZoom(germany, 6));
-
-        final IconGenerator ig = new IconGenerator(getActivity().getApplicationContext());
-        ig.setStyle(IconGenerator.STYLE_GREEN);
-
-        for (Community c: Community.communities) {
-            GoogleMap map = getMap();
-            MarkerOptions markerOptions = new MarkerOptions().
-                    icon(BitmapDescriptorFactory.fromBitmap(ig.makeIcon(c.getAddressCity()))).
-                    position(new LatLng(c.getLat(), c.getLon())).
-                    anchor(ig.getAnchorU(), ig.getAnchorV());
-
-            Marker marker = map.addMarker(markerOptions);
-            markerMap.put(marker, c);
-        }
-
-    }
 
     public boolean onClusterItemClick(Node item) {
         clickedClusterItem = item;

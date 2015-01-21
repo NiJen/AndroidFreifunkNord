@@ -161,12 +161,6 @@ public class SettingsActivity extends PreferenceActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-    }
-
-
 
     /** {@inheritDoc} */
     @Override

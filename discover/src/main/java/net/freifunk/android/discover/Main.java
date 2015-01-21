@@ -30,6 +30,7 @@ import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -53,7 +54,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.model.LatLng;
 
-import net.freifunk.android.discover.model.Community;
 import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.MapMaster;
@@ -92,8 +92,6 @@ public class Main extends ActionBarActivity
     private CharSequence mTitle;
     private GmapsFragment mMapFragment;
     private RequestQueue mRequestQueue;
-    private Fragment mCommunityFragment;
-    private ArrayAdapter<Community> mCommunityAdapter;
 
     private TimerTask updateTask = null;
 
@@ -150,9 +148,7 @@ public class Main extends ActionBarActivity
             mapList.put(nm.getMapName(), nm);
         }
 
-        updateDirectory();
         updateMaps();
-
     }
 
 
@@ -193,10 +189,6 @@ public class Main extends ActionBarActivity
         switch (position) {
             case 0:
                 fragmentManager.beginTransaction().replace(R.id.container, GmapsFragment.newInstance(GmapsFragment.NODES_TYPE)).commit();
-                break;
-            case 1:
-                Intent intent = new Intent(this, CommunityListActivity.class);
-                startActivity(intent);
                 break;
             default:
                 fragmentManager.beginTransaction()
@@ -350,46 +342,6 @@ public class Main extends ActionBarActivity
         }
     }
 
-
-
-
-
-    void updateDirectory() {
-        if (Community.communities.size() > 0)
-            return;
-
-        String URL = "";// "https://raw.githubusercontent.com/freifunk/directory.api.freifunk.net/master/directory.json";
-        /*
-        rq.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                try {
-                    Iterator citykeys = jsonObject.keys();
-                    while (citykeys.hasNext()) {
-                        String cityName = citykeys.next().toString();
-
-                        String detailUrl = jsonObject.getString(cityName);
-                        Community comm = new Community(cityName, detailUrl);
-                        comm.populate(rq, new Community.CommunityReady() {
-                            @Override
-                            public void ready(Community c) {
-                                Community.communities.add(c);
-                            }
-                        });
-                    }
-                } catch (JSONException e) {
-                    Log.e(TAG, e.toString());
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Log.e(TAG, volleyError.toString());
-            }
-        }));
-        */
-    }
-
     void updateMaps() {
         final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
 
@@ -402,7 +354,7 @@ public class Main extends ActionBarActivity
         boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
         int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));
 
-        if (sync_wifi == true) {
+        if (sync_wifi) {
             Log.d(TAG, "Performing online update ONLY via wifi, every " + sync_frequency + " minutes");
         } else {
             Log.d(TAG, "Performing online update ALWAYS, every " + sync_frequency + " minutes");
