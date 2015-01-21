@@ -29,6 +29,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
@@ -127,28 +128,12 @@ public class Main extends ActionBarActivity
                 (DrawerLayout) findViewById(R.id.drawer_layout));
 
 
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
 
-        mapList = new HashMap<String, NodeMap>();
+        /* load from database */
+        LoadNodeMapDatabaseTask loadNodeMapsDatabaseTask = new LoadNodeMapDatabaseTask();
+        loadNodeMapsDatabaseTask.execute(new NodeMap[]{});
 
-        for(NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
-            String mapUrl = sharedPrefs.getString(nm.getMapName(), null);
-
-            if (mapUrl != null)
-            {
-                Log.i(TAG, "Override mapUrl of " + nm.getMapName() + " with value " + mapUrl);
-                nm.setMapUrl(mapUrl);
-            }
-            else
-            {
-                Log.i(TAG, "no value retrieved for map " + nm.getMapName());
-            }
-
-            mapList.put(nm.getMapName(), nm);
-        }
-
-        updateMaps();
     }
 
 
@@ -418,4 +403,42 @@ public class Main extends ActionBarActivity
         }
 
     }
+
+
+    private class LoadNodeMapDatabaseTask extends AsyncTask<NodeMap, Object, NodeMap[]> {
+
+        @Override
+        protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
+            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
+            HashMap<String, NodeMap> nodemaps = databaseHelper.getAllNodeMaps();
+
+            return nodeMaps;
+        }
+
+        @Override
+        protected void onPostExecute(NodeMap[] nodeMaps) {
+            SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
+
+            mapList = new HashMap<String, NodeMap>();
+
+            for (NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
+                String mapUrl = sharedPrefs.getString(nm.getMapName(), null);
+
+                if (mapUrl != null) {
+                    Log.i(TAG, "Override mapUrl of " + nm.getMapName() + " with value " + mapUrl);
+                    nm.setMapUrl(mapUrl);
+                } else {
+                    Log.i(TAG, "no value retrieved for map " + nm.getMapName());
+                }
+
+                mapList.put(nm.getMapName(), nm);
+            }
+
+            updateMaps();
+        }
+    }
+
+
 }
+
