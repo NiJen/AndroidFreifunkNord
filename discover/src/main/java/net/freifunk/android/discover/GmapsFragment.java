@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.TimeUnit;
 
 import com.google.maps.android.clustering.ClusterManager;
 
@@ -315,7 +316,10 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
 
                 if (uptime > 0) {
                     TextView tvUptime = (TextView) v.findViewById(R.id.tv_uptime);
-                    tvUptime.setText("" + uptime);
+                    int day = (int)TimeUnit.SECONDS.toDays(uptime);
+                    long hours = TimeUnit.SECONDS.toHours(uptime) - ( day * 24);
+                    long minutes = TimeUnit.SECONDS.toMinutes(uptime) - (TimeUnit.SECONDS.toHours(uptime)* 60);
+                    tvUptime.setText("" + day + "days " + hours + "h " + minutes +"m");
                     rowUptime.setVisibility(v.VISIBLE);
                 }
                 else {
