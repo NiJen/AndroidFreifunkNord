@@ -21,10 +21,14 @@
 package net.freifunk.android.discover;
 
 
+import com.androidmapsextensions.ClusterGroup;
+import com.androidmapsextensions.ClusterOptions;
+import com.androidmapsextensions.ClusterOptionsProvider;
+import com.androidmapsextensions.ClusteringSettings;
+import com.androidmapsextensions.GoogleMap;
+import com.androidmapsextensions.Marker;
+import com.androidmapsextensions.MarkerOptions;
 import android.app.Activity;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -35,29 +39,19 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.maps.android.MarkerManager;
-import com.google.maps.android.clustering.Cluster;
-import com.google.maps.android.ui.IconGenerator;
 
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.NodeMap;
-import net.freifunk.android.discover.model.NodesResponse;
 import net.freifunk.android.discover.model.MapMaster;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -68,7 +62,7 @@ import com.google.maps.android.clustering.ClusterManager;
  * A simple {@link android.support.v4.app.Fragment} subclass.
  *
  */
-public class GmapsFragment extends SupportMapFragment implements Observer, ClusterManager.OnClusterItemClickListener<Node> {
+public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment implements Observer, GoogleMap.OnMarkerClickListener {
 
     public static final String ARG_TYPE = "type_id";
     public static final String COMMUNITY_TYPE = "type_community";
@@ -80,6 +74,9 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
     private Node clickedClusterItem = null;
     private View contents = null;
     private GoogleMap mMap = null;
+
+    private static final double[] CLUSTER_SIZES = new double[]{180, 160, 144, 120, 96};
+
 
     public static GmapsFragment newInstance(String type) {
         GmapsFragment fragment = new GmapsFragment();
@@ -112,7 +109,6 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
         if (getArguments().containsKey(ARG_TYPE)) {
 
             setupMap();
-            mClusterManager.clearItems();
 
             String type = (String) getArguments().get(ARG_TYPE);
             if (type.equals(NODES_TYPE)) {
@@ -130,20 +126,21 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
 
     private void setupMap() {
         if (mMap == null) {
-            mMap = getMap();
-            MarkerManager markerManager = new MarkerManager(mMap);
+            mMap = getExtendedMap();
+            mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
-            mClusterManager = new ClusterManager(getActivity(), mMap, markerManager);
-            mClusterManager.setOnClusterItemClickListener(this);
+            ClusteringSettings clusteringSettings = new ClusteringSettings();
+            clusteringSettings.addMarkersDynamically(true);
 
-            mMap.setInfoWindowAdapter(mClusterManager.getMarkerManager());
+            clusteringSettings.clusterOptionsProvider(new GmapsClusterOptionsProvider(getResources()));
 
-            mClusterManager.getMarkerCollection().setOnInfoWindowAdapter(new MyCustomAdapterForItems());
+            double clusterSize = CLUSTER_SIZES[1];
 
-            mMap.setOnCameraChangeListener(mClusterManager);
-            mMap.setOnMarkerClickListener(mClusterManager);
+            clusteringSettings.clusterSize(clusterSize);
+            mMap.setClustering(clusteringSettings);
 
             mMap.setMyLocationEnabled(true);
+            mMap.setOnMarkerClickListener(this);
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51, 9), 6));
         }
     }
@@ -161,21 +158,14 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
         for (NodeMap m : mapMaster.getMaps()) {
             if (!m.alreadyAddedToMap()) {
                 for(Node n : m.getNodes()) {
-                    mClusterManager.addItem(n);
-                }
+                    mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+              }
                 m.setAddedToMap(true);
             }
         }
-
-        mClusterManager.cluster();
     }
 
 
-
-    public boolean onClusterItemClick(Node item) {
-        clickedClusterItem = item;
-        return false;
-    }
 
 
     /**
@@ -210,6 +200,11 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
         mCallbacks = sDummyCallbacks;
     }
 
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
+    }
+
     /**
      * A callback interface that all activities containing this fragment must
      * implement. This mechanism allows activities to be notified of item
@@ -219,7 +214,7 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
         public void onMarkerClicked(Object o);
     }
 
-    class MyCustomAdapterForItems implements GoogleMap.InfoWindowAdapter {
+    class CustomInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
         @Override
         public View getInfoWindow(Marker marker) {
             return null;
@@ -229,8 +224,11 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
         public View getInfoContents(Marker marker) {
             View v = contents;
 
-            if (clickedClusterItem != null) {
 
+            if (marker != null && marker.getData() != null) {
+
+                Node n = (Node) marker.getData();
+                
                 TableLayout table = (TableLayout) v.findViewById(R.id.tableLayout);
 
                 TableRow rowLastUpd = (TableRow) v.findViewById(R.id.tablerow_lastupd);
@@ -241,24 +239,24 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
                 TableRow rowUptime = (TableRow) v.findViewById(R.id.tablerow_uptime);
                 TableRow rowLoadAvg = (TableRow) v.findViewById(R.id.tablerow_loadavg);
 
-                long lastUpdate = clickedClusterItem.getLastUpdate();
-                int clientcount = clickedClusterItem.getClientCount();
-                String firmware = clickedClusterItem.getFirmware();
-                String hardware = clickedClusterItem.getHardware();
-                double rxBytes = clickedClusterItem.getRxBytes();
-                double txBytes = clickedClusterItem.getTxBytes();
-                int uptime = clickedClusterItem.getUptime();
-                double loadAvg = clickedClusterItem.getLoadavg();
+                long lastUpdate = n.getLastUpdate();
+                int clientcount = n.getClientCount();
+                String firmware = n.getFirmware();
+                String hardware = n.getHardware();
+                double rxBytes = n.getRxBytes();
+                double txBytes = n.getTxBytes();
+                int uptime = n.getUptime();
+                double loadAvg = n.getLoadavg();
 
                 ImageView ivOnline = (ImageView) v.findViewById(R.id.iv_online);
-                ivOnline.setImageResource(clickedClusterItem.isOnline() ? R.drawable.ic_action_network_wifi_on : R.drawable.ic_action_network_wifi_off);
+                ivOnline.setImageResource(n.isOnline() ? R.drawable.ic_action_network_wifi_on : R.drawable.ic_action_network_wifi_off);
 
                 TextView tvName = (TextView) v.findViewById(R.id.tv_name);
-                String tvNameStr =  clickedClusterItem.getName();
+                String tvNameStr =  n.getName();
                 tvName.setText(tvNameStr);
 
                 TextView tvMapName = (TextView) v.findViewById(R.id.tv_mapname);
-                tvMapName.setText(clickedClusterItem.getMapname());
+                tvMapName.setText(n.getMapname());
 
                 if (lastUpdate > 0) {
                     SimpleDateFormat sdf = null;
@@ -332,6 +330,9 @@ public class GmapsFragment extends SupportMapFragment implements Observer, Clust
                 else {
                     rowLoadAvg.setVisibility(v.GONE);
                 }
+            }
+            else {
+                return null;
             }
 
             return contents;
