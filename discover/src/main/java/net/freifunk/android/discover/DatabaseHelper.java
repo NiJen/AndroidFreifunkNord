@@ -9,6 +9,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -24,7 +25,7 @@ import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 13;
+    private static final int DATABASE_VERSION = 22;
     private static final String DATABASE_NAME = "freifunk.db";
     public static final String TABLE_NODES = "nodes";
     public static final String TABLE_MAPS = "maps";
@@ -157,6 +158,62 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return mapList;
     }
 
+
+
+    public void addNodes(NodeMap nodeMap) {
+
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+
+        SQLiteStatement insertStatement = db.compileStatement("INSERT OR REPLACE INTO " + TABLE_NODES + " (" +
+                                                    COLUMN_NODES_MAPNAME + "," +
+                                                    COLUMN_NODES_NAME + "," +
+                                                    COLUMN_NODES_FIRMWARE + "," +
+                                                    COLUMN_NODES_HARDWARE + "," +
+                                                    COLUMN_NODES_GATEWAY + "," +
+                                                    COLUMN_NODES_CLIENT + "," +
+                                                    COLUMN_NODES_ONLINE + "," +
+                                                    COLUMN_NODES_LAT + "," +
+                                                    COLUMN_NODES_LNG + "," +
+                                                    COLUMN_NODES_NODEID + "," +
+                                                    COLUMN_NODES_CLIENTCOUNT + "," +
+                                                    COLUMN_NODES_RXBYTES + "," +
+                                                    COLUMN_NODES_TXBYTES + "," +
+                                                    COLUMN_NODES_UPTIME + "," +
+                                                    COLUMN_NODES_LOADAVG + "," +
+                                                    COLUMN_NODES_LASTUPDATE + ")" +
+                                                    " VALUES " +
+                                                    "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+
+
+    for(Node node : nodeMap.getNodes()) {
+            Map<String, String> flags = node.getFlags();
+            String gateway = flags.get("gateway");
+            String client = flags.get("client");
+            String online = flags.get("online");
+
+
+            insertStatement.bindString(1, node.getMapname());
+            insertStatement.bindString(2, node.getName());
+            insertStatement.bindString(3, node.getFirmware());
+            insertStatement.bindString(4, node.getHardware());
+            insertStatement.bindString(5, gateway == null ? "": gateway);
+            insertStatement.bindString(6, client == null ? "" : client);
+            insertStatement.bindString(7, online == null ? "" : online);
+            insertStatement.bindString(8, String.valueOf(node.getGeo().latitude));
+            insertStatement.bindString(9, String.valueOf(node.getGeo().longitude));
+            insertStatement.bindString(10, node.getId());
+            insertStatement.bindLong(11, node.getClientCount());
+            insertStatement.bindDouble(12, node.getRxBytes());
+            insertStatement.bindDouble(13, node.getTxBytes());
+            insertStatement.bindLong(14, node.getUptime());
+            insertStatement.bindDouble(15, node.getLoadavg());
+            insertStatement.bindLong(16, node.getLastUpdate());
+
+            insertStatement.execute();
+        }
+    }
 
     public void addNode(Node node) {
 

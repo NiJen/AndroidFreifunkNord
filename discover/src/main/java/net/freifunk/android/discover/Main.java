@@ -47,8 +47,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.ConnectionResult;
@@ -56,9 +58,11 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
+import net.freifunk.android.discover.model.CommunityResponse;
 import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.MapMaster;
+import net.freifunk.android.discover.model.NodesResponse;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -82,7 +86,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
     private static final String TAG = "Main";
 
     private static HashMap<String, NodeMap> mapList = null;
-
+    private static ArrayList<String> mapIsLoading = null;
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
@@ -173,7 +177,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         restoreActionBar();
 
         /* check whether requests are already running */
-        if (RequestQueueHelper.getInstance().size() > 0) {
+        if (RequestQueueHelper.getInstance(this).size() > 0) {
             setRefreshActionButtonState(true);
         }
 
@@ -236,7 +240,8 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
     }
 
     void updateMaps() {
-        final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
+        final String URL = "https://raw.githubusercontent.com/freifunk/directory.api.freifunk.net/master/directory.json";
+        //final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
 
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -259,6 +264,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
 
                 /* load from database */
                 for (NodeMap map : mapList.values()) {
+                    mapIsLoading.add(map.getMapUrl());
                     map.loadNodes();
                 }
 
@@ -266,21 +272,55 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                 requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject jsonObject) {
-                        try {
-                            MapMaster mapMaster = MapMaster.getInstance();
 
+                        try {
                             Iterator mapkeys = jsonObject.keys();
+
                             while (mapkeys.hasNext()) {
                                 String mapName = mapkeys.next().toString();
                                 String mapUrl = jsonObject.getString(mapName);
 
-                                NodeMap m = new NodeMap(mapName, mapUrl);
-                                databaseHelper.addNodeMap(m);
+                                /* load from web */
+                                CommunityResponse cr = new CommunityResponse(mapUrl, new CommunityResponse.Callbacks() {
 
-                                // only update, if not already found in database
-                                if (!mapList.containsKey(m.getMapName())) {
-                                    m.loadNodes();
-                                }
+                                    @Override
+                                    public void onResponseFinished(NodeMap map) {
+                                        try {
+                                            if (map != null) {
+                                                Log.d(TAG, "Add map  + " + map.getMapName() + " : " + map.getMapUrl());
+
+                                                databaseHelper.addNodeMap(map);
+
+                                                // only update, if not already found in database
+                                                if (!mapList.containsKey(map.getMapUrl()) && !mapIsLoading.contains(map.getMapUrl())) {
+                                                    Log.w(TAG, " Load Url " + map.getMapUrl() );
+                                                    mapIsLoading.add(map.getMapUrl());
+                                                    map.loadNodes();
+                                                }
+                                                else {
+                                                    Log.w(TAG, " Url " + map.getMapUrl() + " already loaded ");
+                                                }
+                                            }
+
+                                        } catch (Exception e) {
+                                            Log.e(TAG, e.toString());
+                                        }
+                                        finally {
+                                            if (map != null) {
+                                                Log.d(TAG, "CommunityRespone for  + " + map.getMapName() + " finished.");
+                                                // we set the RequestDone when the saveNodesDatabaseTask has been done
+                                                requestHelper.RequestDone();
+                                            }
+                                        }
+                                    }
+                                });
+
+                                JsonObjectRequest request = new JsonObjectRequest(mapUrl, null, cr, cr);
+
+                                RetryPolicy policy = new DefaultRetryPolicy(30000, 5, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
+                                request.setRetryPolicy(policy);
+
+                                requestHelper.add(request);
                             }
                         } catch (JSONException e) {
                             Log.e(TAG, e.toString());
@@ -329,6 +369,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
 
             mapList = new HashMap<String, NodeMap>();
+            mapIsLoading = new ArrayList<String>();
 
             for (NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
                 String mapUrl = sharedPrefs.getString(nm.getMapName(), null);
@@ -340,7 +381,8 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                     Log.i(TAG, "no value retrieved for map " + nm.getMapName());
                 }
 
-                mapList.put(nm.getMapName(), nm);
+                mapList.put(nm.getMapUrl(), nm);
+                mapIsLoading.remove(nm.getMapUrl());
             }
 
             updateMaps();

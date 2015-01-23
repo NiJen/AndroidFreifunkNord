@@ -202,11 +202,7 @@ public class NodeMap implements Parcelable {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(NodeMap.this.context);
 
             for (NodeMap nodeMap : nodeMaps) {
-                CopyOnWriteArrayList<Node> nodeList = nodeMap.getNodes();
-
-                for (Node node : nodeList) {
-                    databaseHelper.addNode(node);
-                }
+                databaseHelper.addNodes(nodeMap);
             }
 
             return nodeMaps;
