@@ -5,7 +5,7 @@
 	"Lübeck" : "http://map.luebeck.freifunk.net/nodes.json",
 	"Münster" : "https://freifunk-muenster.de/map/nodes.json",
 	"Paderborn" : "http://map.paderborn.freifunk.net/nodes.json",
-	"Göttingen" : "http://cccgoe.de/nodes.json",
+	"Göttingen" : "https://cccgoe.de/map/nodes.json",
 	"Rheinland" : "http://ffmap.freifunk-rheinland.net/nodes.json",
 	"Freiburg" : "http://freiburg.freifunk.net/ffmap-d3/nodes.json",
 	"Lüneberg" : "http://freifunk-lueneburg.de/karte/nodes.json",
