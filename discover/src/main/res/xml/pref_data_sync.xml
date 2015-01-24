@@ -20,6 +20,12 @@
         android:positiveButtonText="@null" />
 
 
+    <CheckBoxPreference
+        android:key="nodes_onlyOnline"
+        android:title="@string/pref_title_nodes_onlyOnline"
+        android:summary="@string/pref_description_nodes_onlyOnline"
+        android:defaultValue="false" />
+
     <PreferenceScreen android:key="screen_communities" android:title="@string/pref_title_communities">
         <Preference
             android:key="communities_reset"

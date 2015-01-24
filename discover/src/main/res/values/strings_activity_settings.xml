@@ -9,6 +9,9 @@
 
     <string name="pref_title_sync_frequency">Update Interval</string>
 
+    <string name="pref_title_nodes_onlyOnline">Nur online Nodes darstellen</string>
+    <string name="pref_description_nodes_onlyOnline">Zeigt auf der Karte ausschliesslich Nodes, die zur Zeit der Datenerfassung online sind.</string>
+
     <string name="pref_title_communities">Communities</string>
 
 

@@ -29,7 +29,9 @@ import com.androidmapsextensions.GoogleMap;
 import com.androidmapsextensions.Marker;
 import com.androidmapsextensions.MarkerOptions;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -152,15 +154,22 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     }
 
     private void createNodesMap() {
+
         MapMaster mapMaster = MapMaster.getInstance();
+        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        boolean onlyOnlineNodes = sharedPrefs.getBoolean("nodes_onlyOnline", false);
 
         markerMap = new HashMap<Marker, Object>();
 
         for (NodeMap m : mapMaster.getMaps()) {
             if (!m.alreadyAddedToMap()) {
                 for(Node n : m.getNodes()) {
-                    mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+
+                    if (onlyOnlineNodes == false || n.isOnline()) {
+                        mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+                    }
               }
+
                 m.setAddedToMap(true);
             }
         }
