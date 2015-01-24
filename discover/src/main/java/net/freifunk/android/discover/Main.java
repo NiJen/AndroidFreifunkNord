@@ -117,7 +117,9 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
 
         mTitle = getTitle();
 
+        /* initialize singletons */
         DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
+        RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this);
 
         /* load from database */
         LoadNodeMapDatabaseTask loadNodeMapsDatabaseTask = new LoadNodeMapDatabaseTask();
@@ -173,7 +175,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         restoreActionBar();
 
         /* check whether requests are already running */
-        if (RequestQueueHelper.getInstance().size() > 0) {
+        if (RequestQueueHelper.getInstance(this).size() > 0) {
             setRefreshActionButtonState(true);
         }
 
@@ -257,11 +259,6 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
             @Override
             public void run() {
 
-                /* load from database */
-                for (NodeMap map : mapList.values()) {
-                    map.loadNodes();
-                }
-
                 /* load from web */
                 requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -296,7 +293,6 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                         requestHelper.RequestDone();
                     }
                 }));
-
             }
         };
 
@@ -319,14 +315,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
             HashMap<String, NodeMap> nodemaps = databaseHelper.getAllNodeMaps();
-
-            return nodeMaps;
-        }
-
-        @Override
-        protected void onPostExecute(NodeMap[] nodeMaps) {
             SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
 
             mapList = new HashMap<String, NodeMap>();
 
@@ -342,6 +331,17 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
 
                 mapList.put(nm.getMapName(), nm);
             }
+
+            /* load from database */
+            for (NodeMap map : mapList.values()) {
+                map.loadNodes();
+            }
+
+            return nodeMaps;
+        }
+
+        @Override
+        protected void onPostExecute(NodeMap[] nodeMaps) {
 
             updateMaps();
         }
