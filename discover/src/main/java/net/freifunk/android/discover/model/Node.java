@@ -20,6 +20,7 @@
 
 package net.freifunk.android.discover.model;
 
+import com.androidmapsextensions.Marker;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Collections;
@@ -53,6 +54,8 @@ public class Node implements ClusterItem {
     private String id;
     private long lastUpdate;
 
+    private Marker marker;
+
     public Node(List<String> macs, String mapname, String name, String hardware, String firmware, Map<String, String> flags, LatLng geo, String id, int clientCount, double rx_bytes, double tx_bytes, int uptime, double loadavg, long lastUpdate) {
         this.macs = macs;
         this.mapname = mapname;
@@ -68,6 +71,7 @@ public class Node implements ClusterItem {
         this.uptime = uptime;
         this.loadavg = loadavg;
         this.lastUpdate = lastUpdate;
+        this.marker = null;
     }
     
     @Override
@@ -180,6 +184,14 @@ public class Node implements ClusterItem {
         }
 
         return null;
+    }
+
+    public void setMarker(Marker marker) {
+        this.marker = marker;
+    }
+
+    public Marker getMarker() {
+        return this.marker;
     }
 
 }

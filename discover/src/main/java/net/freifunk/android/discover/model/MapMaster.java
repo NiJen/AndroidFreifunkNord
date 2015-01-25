@@ -42,12 +42,13 @@ public class MapMaster extends Observable {
     }
 
 
-    public void addMap(NodeMap m) {
+    public void updateMap(NodeMap m) {
 
         // At the moment we assume that a later received map is more up to date
         maps.put(m.getMapName(), m);
         update();
     }
+
 
     public void update() {
         setChanged();

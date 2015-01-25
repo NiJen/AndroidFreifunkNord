@@ -48,9 +48,13 @@ import android.widget.CompoundButton;
 import android.widget.RadioGroup;
 
 
+import net.freifunk.android.discover.model.MapMaster;
 import net.freifunk.android.discover.model.NodeMap;
+import net.freifunk.android.discover.model.NodeMapComparator;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -82,85 +86,91 @@ public class SettingsActivity extends PreferenceActivity {
 
         addPreferencesFromResource(R.xml.pref_data_sync);
 
-        findPreference("communities_reset").setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-
-                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-                DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
-
-                SharedPreferences.Editor editor = settings.edit();
-
-                for(NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
-                    String res = settings.getString(nm.getMapName(), "null");
-
-                    if (res != null)
-                    {
-                        editor.putString(nm.getMapName(), nm.getMapUrl());
-
-                        EditTextPreference editTextPreference  = (EditTextPreference) findPreference(nm.getMapName());
-
-                        if (editTextPreference != null) {
-                            editTextPreference.setText(nm.getMapUrl());
-                        }
-                    }
-                }
-
-                editor.commit();
-
-                return true;
-            }
-        });
-
         // get data via the key
-        ArrayList<NodeMap> nodeMapArrayList = getIntent().getParcelableArrayListExtra("communities");
+        final MapMaster mapMaster = MapMaster.getInstance();
+
+
+        ArrayList<NodeMap> nodeMapArrayList = new ArrayList<NodeMap>(mapMaster.getMaps());
         PreferenceCategory communities = (PreferenceCategory) findPreference("communities");
 
+        // sort by Name
+        Collections.sort(nodeMapArrayList, new NodeMapComparator());
+
         if (nodeMapArrayList != null && communities != null) {
-            for (final NodeMap nm : nodeMapArrayList) {
+            for (final NodeMap nm : nodeMapArrayList ) {
 
-             PreferenceScreen communityPreferenceScreen = getPreferenceManager().createPreferenceScreen(SettingsActivity.this);
+                 PreferenceScreen communityPreferenceScreen = getPreferenceManager().createPreferenceScreen(SettingsActivity.this);
 
-             communityPreferenceScreen.setTitle(nm.getMapName());
-             communityPreferenceScreen.setKey(nm.getMapName());
+                 communityPreferenceScreen.setTitle(nm.getMapName());
+                 communityPreferenceScreen.setKey(nm.getMapName());
 
-             final CheckBoxPreference deactivateCommunityPreference = new CheckBoxPreference(SettingsActivity.this);
+                 final CheckBoxPreference deactivateCommunityPreference = new CheckBoxPreference(SettingsActivity.this);
 
-             // TODO: move Strings to resources
-             deactivateCommunityPreference.setTitle("Community aktiv");
-             deactivateCommunityPreference.setSummary("deaktivieren, falls Community nicht auf der Karte angezeigt werden soll");
-             deactivateCommunityPreference.setKey("community_deactivate");
-             deactivateCommunityPreference.setChecked(nm.isActive());
-             deactivateCommunityPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                 // TODO: move Strings to resources
+                 deactivateCommunityPreference.setTitle("Community aktiv");
+                 deactivateCommunityPreference.setSummary("deaktivieren, falls Community nicht auf der Karte angezeigt werden soll");
+                 deactivateCommunityPreference.setKey("community_deactivate_" + nm.getMapName());
+                 deactivateCommunityPreference.setChecked(nm.isActive());
+                 deactivateCommunityPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
-                 @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                     @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
 
-                     DatabaseHelper db = DatabaseHelper.getInstance(null);
-                     boolean newActive = newValue.toString().equals("true") ? true : false;
+                         MapMaster mapMaster = MapMaster.getInstance();
+                         DatabaseHelper db = DatabaseHelper.getInstance(null);
+                         boolean newActive = newValue.toString().equals("true") ? true : false;
 
-                     nm.setActive(newActive);
-                     db.addNodeMap(nm);
+                         nm.setActive(newActive);
+                         db.addNodeMap(nm);
 
-                     deactivateCommunityPreference.setChecked(newActive);
+                         // triggers map update
+                         nm.setAddedToMap(false);
+                         mapMaster.updateMap(nm);
 
-                     return false;
-                }
-             });
+                         return true;
+                    }
+                 });
 
-             EditTextPreference editCommunityPreference = new EditTextPreference(SettingsActivity.this);
+                 EditTextPreference editCommunityPreference = new EditTextPreference(SettingsActivity.this);
 
-             // TODO: move Strings to resources
-             editCommunityPreference.setTitle("URL bearbeiten");
-             editCommunityPreference.setSummary("aendern, falls eine andere Quelle genutzt werden soll.");
-             editCommunityPreference.setKey("community_edit");
-             editCommunityPreference.setText(nm.getMapUrl());
+                 // TODO: move Strings to resources
+                 editCommunityPreference.setTitle("URL bearbeiten");
+                 editCommunityPreference.setSummary("aendern, falls eine andere Quelle genutzt werden soll.");
+                 editCommunityPreference.setKey("community_edit_" + nm.getMapName());
+                 editCommunityPreference.setText(nm.getMapUrl());
 
-             communityPreferenceScreen.addPreference(deactivateCommunityPreference);
-             communityPreferenceScreen.addPreference(editCommunityPreference);
 
-             communities.addPreference((Preference) communityPreferenceScreen);
+                 editCommunityPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 
+                     @Override
+                     public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                         DatabaseHelper db = DatabaseHelper.getInstance(null);
+
+
+
+                         // remove old nodes from node
+                         nm.setActive(false);
+                         nm.setAddedToMap(false);
+                         mapMaster.updateMap(nm);
+
+                         nm.setMapUrl(newValue.toString());
+                         db.addNodeMap(nm);
+                         db.deleteAllNodesForMap(nm);
+
+                         // load new nodes
+                         nm.setActive(true);
+                         nm.loadNodes();
+                         mapMaster.updateMap(nm);
+
+                         return true;
+                     }
+                 });
+
+                 communityPreferenceScreen.addPreference(deactivateCommunityPreference);
+                 communityPreferenceScreen.addPreference(editCommunityPreference);
+
+                 communities.addPreference((Preference) communityPreferenceScreen);
             }
         }
 

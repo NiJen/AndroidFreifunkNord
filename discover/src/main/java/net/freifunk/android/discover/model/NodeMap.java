@@ -1,15 +1,12 @@
 package net.freifunk.android.discover.model;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
-import com.android.volley.RequestQueue;
 import com.android.volley.RetryPolicy;
 import com.android.volley.toolbox.JsonObjectRequest;
 
@@ -17,6 +14,7 @@ import net.freifunk.android.discover.DatabaseHelper;
 import net.freifunk.android.discover.RequestQueueHelper;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -29,14 +27,16 @@ public class NodeMap implements Parcelable {
     Context context;
     String mapName;
     String mapUrl;
+    boolean active;
 
     CopyOnWriteArrayList<Node> nodeList;
     boolean addedToMap;
 
-    public NodeMap(String name, String mapUrl) {
+    public NodeMap(String name, String mapUrl, boolean active) {
         this.mapName = name;
         this.mapUrl = mapUrl;
         this.nodeList = new CopyOnWriteArrayList<Node>();
+        this.active = active;
         this.addedToMap = false;
     }
 
@@ -78,6 +78,15 @@ public class NodeMap implements Parcelable {
         return this.addedToMap;
     }
 
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isActive() {
+        return this.active;
+    }
+
     public void loadNodes() {
         final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
 
@@ -104,7 +113,7 @@ public class NodeMap implements Parcelable {
                 try {
                     MapMaster mapMaster = MapMaster.getInstance();
                     Log.d(TAG, "Finished loading + " + map.getMapName());
-                    mapMaster.addMap(map);
+                    mapMaster.updateMap(map);
 
                     SaveNodesDatabaseTask saveNodesDatabaseTask = new SaveNodesDatabaseTask();
                     saveNodesDatabaseTask.execute(new NodeMap[]{map});
@@ -183,7 +192,7 @@ public class NodeMap implements Parcelable {
 
                 // only update if there are nodes available
                 if (size > 0) {
-                    mapMaster.addMap(nodeMap);
+                    mapMaster.updateMap(nodeMap);
                 }
                 else {
                     Log.d(TAG, "no entries found for " + nodeMap.getMapName() + " in database ");

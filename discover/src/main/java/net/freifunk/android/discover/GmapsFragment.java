@@ -161,7 +161,6 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
 
         MapMaster mapMaster = MapMaster.getInstance();
 
-
         boolean onlyOnlineNodes = sharedPrefs.getBoolean("nodes_onlyOnline", false);
 
         markerMap = new HashMap<Marker, Object>();
@@ -170,8 +169,20 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
             if (!m.alreadyAddedToMap()) {
                 for(Node n : m.getNodes()) {
 
-                    if (onlyOnlineNodes == false || n.isOnline()) {
-                        mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+                    Marker marker = null;
+
+                    if (m.isActive()) {
+                        if (onlyOnlineNodes == false || n.isOnline()) {
+                            marker = mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+                            n.setMarker(marker);
+                        }
+                    }
+                    else {
+                        marker = n.getMarker();
+
+                        if (marker != null) {
+                            marker.remove();
+                        }
                     }
               }
 

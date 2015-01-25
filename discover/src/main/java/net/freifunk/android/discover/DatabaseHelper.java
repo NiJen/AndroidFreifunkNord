@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 14;
+    private static final int DATABASE_VERSION = 13;
     private static final String DATABASE_NAME = "freifunk.db";
     public static final String TABLE_NODES = "nodes";
     public static final String TABLE_MAPS = "maps";
@@ -258,5 +258,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         return nodeList;
 
+    }
+
+    public int deleteAllNodesForMap(NodeMap map) {
+        SQLiteDatabase db = null;
+        db = this.getWritableDatabase();
+
+        return db.delete(TABLE_NODES, COLUMN_MAPS_MAPNAME + " = ?", new String[] { map.getMapName() });
     }
 }
