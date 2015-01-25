@@ -130,20 +130,22 @@ public class NodesResponse implements Response.Listener<JSONObject>, Response.Er
 
                 // Geo
                 LatLng pos = null;
- //               Log.d(TAG, String.valueOf(node.get("geo")));
-                if (!String.valueOf(node.get("geo")).equals("null")) {
-                    JSONArray geo = node.getJSONArray("geo");
-                    Double lat = (Double) geo.get(0);
-                    Double lng = (Double) geo.get(1);
-                    pos = new LatLng(lat, lng);
-                }
 
                 // Id
                 String id = ((String) node.get("id")).trim();
 
-                Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, hardware, firmware, flags, pos, id, clientCount, rx_bytes, tx_bytes, uptime, loadavg, new Date().getTime());
-                Node.nodes.add(n);
-                mCallback.onNodeAvailable(n);
+                if (node.has("geo") && !String.valueOf(node.get("geo")).equals("null")) {
+                    JSONArray geo = node.getJSONArray("geo");
+                    Double lat = (Double) geo.get(0);
+                    Double lng = (Double) geo.get(1);
+                    pos = new LatLng(lat, lng);
+
+                    // we add the node only, when it has some geo information
+                    Node n = new Node(mac_list,this.mCallingMap.getMapName(), name, hardware, firmware, flags, pos, id, clientCount, rx_bytes, tx_bytes, uptime, loadavg, new Date().getTime());
+                    Node.nodes.add(n);
+
+                    mCallback.onNodeAvailable(n);
+                }
             }
         } catch (JSONException e) {
             Log.e(TAG, "Seems something went wrong while loading Nodes for " + this.mCallingMap.getMapName() + ":" + e.toString());
