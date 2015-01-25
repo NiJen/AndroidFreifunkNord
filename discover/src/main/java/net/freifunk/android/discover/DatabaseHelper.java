@@ -24,7 +24,7 @@ import java.util.Map;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    private static final int DATABASE_VERSION = 13;
+    private static final int DATABASE_VERSION = 14;
     private static final String DATABASE_NAME = "freifunk.db";
     public static final String TABLE_NODES = "nodes";
     public static final String TABLE_MAPS = "maps";
@@ -48,6 +48,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static final String COLUMN_MAPS_MAPNAME = "mapname";
     public static final String COLUMN_MAPS_URL = "url";
+    public static final String COLUMN_MAPS_ACTIVE = "active";
     public static final String COLUMN_MAPS_LASTUPDATE = "lastUpdate";
 
     private static DatabaseHelper databaseHelper = null;
@@ -94,6 +95,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 TABLE_MAPS + "(" +
                 COLUMN_MAPS_MAPNAME + " TEXT," +
                 COLUMN_MAPS_URL + " TEXT," +
+                COLUMN_MAPS_ACTIVE + " INTEGER," +
                 COLUMN_MAPS_LASTUPDATE + " INTEGER" +
                 ")";
         db.execSQL(CREATE_MAP_TABLE);
@@ -107,12 +109,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NODES);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MAPS);
+        onCreate(db);
+    }
+
     public void addNodeMap(NodeMap map) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
         values.put(COLUMN_MAPS_URL, map.getMapUrl());
+        values.put(COLUMN_MAPS_ACTIVE, map.isActive() == true ? 1 : 0);
         values.put(COLUMN_MAPS_LASTUPDATE, new Date().getTime());
 
         int updateResult = db.update(TABLE_MAPS, values, COLUMN_MAPS_MAPNAME + " = \"" + map.getMapName() + "\"", null);
@@ -126,6 +136,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             Log.v("DatabaseHelper", "NodeMap updated " + map.getMapName() + "/" + map.getMapUrl());
         }
     }
+
 
 
     public HashMap<String, NodeMap> getAllNodeMaps() {
@@ -143,8 +154,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 do {
                     NodeMap map = new NodeMap(
                             cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MAPS_MAPNAME)),
-                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MAPS_URL)));
-
+                            cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MAPS_URL)),
+                            cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_MAPS_ACTIVE)) == 1 ? true : false);
                     mapList.put(map.getMapName(), map);
                 } while (cursor.moveToNext());
             }

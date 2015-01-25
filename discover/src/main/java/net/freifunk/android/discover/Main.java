@@ -271,7 +271,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                                 String mapName = mapkeys.next().toString();
                                 String mapUrl = jsonObject.getString(mapName);
 
-                                NodeMap m = new NodeMap(mapName, mapUrl);
+                                NodeMap m = new NodeMap(mapName, mapUrl, true);
                                 databaseHelper.addNodeMap(m);
 
                                 // only update, if not already found in database
@@ -293,6 +293,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                         requestHelper.RequestDone();
                     }
                 }));
+
             }
         };
 
@@ -314,27 +315,18 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         @Override
         protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
             DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
-            HashMap<String, NodeMap> nodemaps = databaseHelper.getAllNodeMaps();
-            SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
             mapList = new HashMap<String, NodeMap>();
 
             for (NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
-                String mapUrl = sharedPrefs.getString(nm.getMapName(), null);
-
-                if (mapUrl != null) {
-                    Log.i(TAG, "Override mapUrl of " + nm.getMapName() + " with value " + mapUrl);
-                    nm.setMapUrl(mapUrl);
-                } else {
-                    Log.i(TAG, "no value retrieved for map " + nm.getMapName());
-                }
-
                 mapList.put(nm.getMapName(), nm);
             }
 
             /* load from database */
             for (NodeMap map : mapList.values()) {
-                map.loadNodes();
+                if (map.isActive()) {
+                    map.loadNodes();
+                }
             }
 
             return nodeMaps;

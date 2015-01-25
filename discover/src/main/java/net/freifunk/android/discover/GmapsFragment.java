@@ -71,6 +71,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     public static final String COMMUNITY_TYPE = "type_community";
     public static final String NODES_TYPE = "type_nodes";
     private static final String TAG = "GmapsFragment";
+    private SharedPreferences sharedPrefs = null;
     private HashMap<Marker, Object> markerMap;
     private Callbacks mCallbacks = sDummyCallbacks;
     private ClusterManager<Node> mClusterManager;
@@ -109,6 +110,9 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
         if (getArguments().containsKey(ARG_TYPE)) {
 
             setupMap();
@@ -156,7 +160,8 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     private void createNodesMap() {
 
         MapMaster mapMaster = MapMaster.getInstance();
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+
         boolean onlyOnlineNodes = sharedPrefs.getBoolean("nodes_onlyOnline", false);
 
         markerMap = new HashMap<Marker, Object>();

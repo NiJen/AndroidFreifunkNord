@@ -44,6 +44,8 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.support.v4.app.NavUtils;
+import android.widget.CompoundButton;
+import android.widget.RadioGroup;
 
 
 import net.freifunk.android.discover.model.NodeMap;
@@ -51,6 +53,7 @@ import net.freifunk.android.discover.model.NodeMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -71,9 +74,10 @@ public class SettingsActivity extends PreferenceActivity {
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
+    private static final String TAG = "SettingsActivity";
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.pref_data_sync);
@@ -113,15 +117,50 @@ public class SettingsActivity extends PreferenceActivity {
         PreferenceCategory communities = (PreferenceCategory) findPreference("communities");
 
         if (nodeMapArrayList != null && communities != null) {
-            for (NodeMap nm : nodeMapArrayList) {
-                EditTextPreference editTextPreference = new EditTextPreference(this);
+            for (final NodeMap nm : nodeMapArrayList) {
 
-                //make sure each key is unique
-                editTextPreference.setKey(nm.getMapName());
-                editTextPreference.setTitle(nm.getMapName());
+             PreferenceScreen communityPreferenceScreen = getPreferenceManager().createPreferenceScreen(SettingsActivity.this);
 
-                editTextPreference.setText(nm.getMapUrl());
-                communities.addPreference(editTextPreference);
+             communityPreferenceScreen.setTitle(nm.getMapName());
+             communityPreferenceScreen.setKey(nm.getMapName());
+
+             final CheckBoxPreference deactivateCommunityPreference = new CheckBoxPreference(SettingsActivity.this);
+
+             // TODO: move Strings to resources
+             deactivateCommunityPreference.setTitle("Community aktiv");
+             deactivateCommunityPreference.setSummary("deaktivieren, falls Community nicht auf der Karte angezeigt werden soll");
+             deactivateCommunityPreference.setKey("community_deactivate");
+             deactivateCommunityPreference.setChecked(nm.isActive());
+             deactivateCommunityPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+
+                 @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+
+                     DatabaseHelper db = DatabaseHelper.getInstance(null);
+                     boolean newActive = newValue.toString().equals("true") ? true : false;
+
+                     nm.setActive(newActive);
+                     db.addNodeMap(nm);
+
+                     deactivateCommunityPreference.setChecked(newActive);
+
+                     return false;
+                }
+             });
+
+             EditTextPreference editCommunityPreference = new EditTextPreference(SettingsActivity.this);
+
+             // TODO: move Strings to resources
+             editCommunityPreference.setTitle("URL bearbeiten");
+             editCommunityPreference.setSummary("aendern, falls eine andere Quelle genutzt werden soll.");
+             editCommunityPreference.setKey("community_edit");
+             editCommunityPreference.setText(nm.getMapUrl());
+
+             communityPreferenceScreen.addPreference(deactivateCommunityPreference);
+             communityPreferenceScreen.addPreference(editCommunityPreference);
+
+             communities.addPreference((Preference) communityPreferenceScreen);
+
             }
         }
 
