@@ -35,8 +35,6 @@ import com.google.maps.android.clustering.ClusterItem;
  */
 public class Node implements ClusterItem {
 
-    public static final Set<Node> nodes = Collections.synchronizedSet(new HashSet<Node>());
-
 
     private List<String> macs;
     private String mapname;
@@ -160,23 +158,49 @@ public class Node implements ClusterItem {
         return clientCount;
     }
 
+    public void setClientCount(int clientCount) {
+        this.clientCount = clientCount;
+    }
+
     public double getRxBytes() {
         return rx_bytes;
     }
+
+    public void setRxBytes(double rx_bytes) {
+        this.rx_bytes = rx_bytes;
+    }
+
+
 
     public double getTxBytes() {
         return tx_bytes;
     }
 
+    public void setTxBytes(double tx_bytes) {
+        this.tx_bytes = tx_bytes;
+    }
     public int getUptime() {
         return uptime;
+    }
+
+    public void setUptime(int uptime) {
+        this.uptime = uptime;
     }
 
     public double getLoadavg() {
         return loadavg;
     }
 
+    public void setLoadavg(double loadavg) {
+        this.loadavg = loadavg;
+    }
+
     public long getLastUpdate() { return  lastUpdate; }
+
+    public void setLastUpdate(long lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
+
 
     public Boolean isOnline() {
         if (flags.containsKey("online")) {
@@ -184,6 +208,10 @@ public class Node implements ClusterItem {
         }
 
         return null;
+    }
+
+    public void setOnline(boolean online) {
+        flags.put("online", (online) ? "true" : "false");
     }
 
     public void setMarker(Marker marker) {
