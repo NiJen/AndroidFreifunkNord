@@ -68,7 +68,6 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     private View contents = null;
     private GoogleMap mMap = null;
 
-    private static final double[] CLUSTER_SIZES = new double[]{180, 160, 144, 120, 96};
 
 
     public static GmapsFragment newInstance() {
@@ -114,10 +113,8 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
             clusteringSettings.addMarkersDynamically(true);
 
             clusteringSettings.clusterOptionsProvider(new GmapsClusterOptionsProvider(getResources()));
-
-            double clusterSize = CLUSTER_SIZES[1];
-
-            clusteringSettings.clusterSize(clusterSize);
+            clusteringSettings.addMarkersDynamically(true);
+            clusteringSettings.clusterSize(200);
             mMap.setClustering(clusteringSettings);
 
             mMap.setMyLocationEnabled(true);
@@ -125,6 +122,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51, 9), 6));
 
             EventBus.getInstance().register(this);
+
         }
     }
 

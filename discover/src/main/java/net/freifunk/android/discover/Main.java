@@ -29,6 +29,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
@@ -69,8 +70,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
     private static volatile HashMap<String, NodeMap> mapsLoading = null;
     private static volatile HashMap<String, NodeMap> mapsSaving = null;
 
-    //final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
-    final String URL = "http://localhost:8080/ffdbg/MapUrls.json";
+
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
@@ -120,8 +120,6 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                     updateHandler.postDelayed(updateTask, sync_frequency * 60 * 1000);
             }
         };
-
-
 
 
         mapsLoading = new HashMap<String, NodeMap>(20);
@@ -238,6 +236,22 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
     public void onMarkerClicked(Object o) {
     }
 
+    public void loadFromWeb()
+    {
+        final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
+        //final String URL = "http://localhost:8080/ffdbg/MapUrls.json";
+
+        MapMaster mapMaster = MapMaster.getInstance();
+        setRefreshActionButtonState(true);
+
+        RequestQueue requestHelper = RequestQueue.getInstance();
+
+        /* load from web */
+        NodeMapResponse nr = new NodeMapResponse(mapMaster.getMaps());
+        JsonObjectRequest request = new JsonObjectRequest(URL, null, nr, nr);
+
+        requestHelper.add(request);
+    }
 
     @Subscribe
     public synchronized void onNodeMapResult(NodeResult nodeResult) {
@@ -247,7 +261,7 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
 
         /* database loading of map finished */
         if (result == NodeResult.NodeResultType.LOAD_MAP) {
-
+            Log.v(TAG, "LOAD_MAP received");
             for (NodeMap map : nodeResult.getResults().values()) {
                 mapMaster.put(map.getMapName(), map);
 
@@ -256,9 +270,15 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                     map.loadNodes();
                 }
             }
+
+            if (mapsLoading.isEmpty()) {
+                loadFromWeb();
+            }
+
         }
         /* web loading of map finished */
         else if (result == NodeResult.NodeResultType.UPDATE_MAP) {
+            Log.v(TAG, "UPDATE_MAP received");
             for (NodeMap map : nodeResult.getResults().values()) {
                 if (map.isActive()) {
                     mapsSaving.put(map.getMapName(), map);
@@ -268,30 +288,26 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         }
         /* database loading of nodes finished */
         else if (result == NodeResult.NodeResultType.LOAD_NODES) {
+            Log.v(TAG, "LOAD_NODES received");
             NodeMap map = nodeResult.getResult();
 
             if (mapsLoading.containsValue(map)) {
                 mapsLoading.remove(map.getMapName());
 
                 if (mapsLoading.isEmpty()) {
-                    setRefreshActionButtonState(true);
-                    RequestQueue requestHelper = RequestQueue.getInstance();
-
-                    /* load from web */
-                    NodeMapResponse nr = new NodeMapResponse(mapMaster.getMaps());
-                    JsonObjectRequest request = new JsonObjectRequest(URL, null, nr, nr);
-
-                    requestHelper.add(request);
+                    loadFromWeb();
                 }
             }
         }
         /* web loading of nodes finished */
         else if (result == NodeResult.NodeResultType.UPDATE_NODES) {
+            Log.v(TAG, "UPDATE_NODES received");
             NodeMap map = nodeResult.getResult();
             map.saveNodes();
         }
         /* database saving of nodes finished */
         else if (result == NodeResult.NodeResultType.SAVE_NODES) {
+            Log.v(TAG, "SAVE_NODES received");
             mapsSaving.remove(nodeResult.getResult().getMapName());
 
             if (mapsSaving.isEmpty()) {
