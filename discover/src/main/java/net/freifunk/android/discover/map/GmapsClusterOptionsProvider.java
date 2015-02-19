@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.freifunk.android.discover;
+package net.freifunk.android.discover.map;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -31,6 +31,8 @@ import com.androidmapsextensions.ClusterOptionsProvider;
 import com.androidmapsextensions.Marker;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+
+import net.freifunk.android.discover.R;
 
 import java.util.List;
 

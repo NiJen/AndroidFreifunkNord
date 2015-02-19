@@ -1,7 +1,8 @@
 /*
  * Node.java
  *
- * Copyright (C) 2014  Philipp Dreimann
+ * Original work Copyright (C) 2014  Philipp Dreimann
+ * Modified work Copyright (C) 2015  Bjoern Petri
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +24,8 @@ package net.freifunk.android.discover.model;
 import com.androidmapsextensions.Marker;
 import com.google.android.gms.maps.model.LatLng;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.google.maps.android.clustering.ClusterItem;
 /**

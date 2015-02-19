@@ -1,8 +1,25 @@
-package net.freifunk.android.discover;
-
-/**
- * Created by NiJen on 13.10.2014.
+/*
+ * DatabaseHelper.java
+ *
+ * Original work Copyright (C) 2014 NiJen
+ * Modified work Copyright (C) 2015 Bjoern Petri
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
+
+package net.freifunk.android.discover.helper;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -22,7 +39,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+public class Database extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 13;
     private static final String DATABASE_NAME = "freifunk.db";
@@ -51,24 +68,27 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COLUMN_MAPS_ACTIVE = "active";
     public static final String COLUMN_MAPS_LASTUPDATE = "lastUpdate";
 
-    private static DatabaseHelper databaseHelper = null;
+    private static Database database = null;
 
-    private DatabaseHelper(Context context) {
+    private Database(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    public static synchronized DatabaseHelper getInstance(Context context) {
+    public static synchronized Database getInstance(Context context) {
         // lazy initialize the request queue, the queue instance will be
         // created when it is accessed for the first time
-        if (databaseHelper == null && context != null) {
-            databaseHelper = new DatabaseHelper(context);
+        if (database == null && context != null) {
+            database = new Database(context);
         }
 
-        return databaseHelper;
+        return database;
     }
 
+    public static synchronized Database getInstance() {
+        return database;
+    }
 
-    @Override
+        @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_NODE_TABLE = "CREATE TABLE " +
                 TABLE_NODES + "(" +
@@ -130,10 +150,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         if (updateResult == 0) {
             values.put(COLUMN_MAPS_MAPNAME, map.getMapName());
 
-            Log.v("DatabaseHelper", "NodeMap added " + map.getMapName() + "/" + map.getMapUrl());
+            Log.v("Database", "NodeMap added " + map.getMapName() + "/" + map.getMapUrl());
             db.insert(TABLE_MAPS, null, values);
         } else {
-            Log.v("DatabaseHelper", "NodeMap updated " + map.getMapName() + "/" + map.getMapUrl());
+            Log.v("Database", "NodeMap updated " + map.getMapName() + "/" + map.getMapUrl());
         }
     }
 
@@ -170,7 +190,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 
     public void addNode(Node node) {
-
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
@@ -194,19 +213,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_NODES_LOADAVG, node.getLoadavg());
         values.put(COLUMN_NODES_LASTUPDATE, new Date().getTime());
 
-        /* try update first */
+        // try update first
         int result = db.update(TABLE_NODES, values, COLUMN_NODES_NAME + " = \"" + node.getName() + "\" AND  " + COLUMN_NODES_MAPNAME + " = \"" + node.getMapname() + "\"", null);
 
         if (result == 0) {
             values.put(COLUMN_NODES_MAPNAME, node.getMapname());
             values.put(COLUMN_NODES_NAME, node.getName());
 
-            Log.v("DatabaseHelper", "Node added " + node.getId() + "/" + node.getName());
+            Log.v("Database", "Node added " + node.getId() + "/" + node.getName());
             db.insert(TABLE_NODES, null, values);
         } else {
-            Log.v("DatabaseHelper", "Node updated " + node.getId() + "/" + node.getName());
+            Log.v("Database", "Node updated " + node.getId() + "/" + node.getName());
         }
-
     }
 
 

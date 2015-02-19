@@ -1,5 +1,5 @@
 /*
- * NodeMapComparator.java
+ * EventBusHelper.java
  *
  * Copyright (C) 2015 Bjoern Petri
  *
@@ -18,16 +18,16 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package net.freifunk.android.discover.model;
+package net.freifunk.android.discover.helper;
 
-import java.util.Comparator;
+import com.squareup.otto.Bus;
 
-public class NodeMapComparator implements Comparator<NodeMap> {
+public class EventBus {
 
-        @Override
-        public int compare(NodeMap o1, NodeMap o2) {
-            return o1.getMapName().compareTo(o2.getMapName());
+        private static final Bus BUS = new Bus();
+
+        public static Bus getInstance() {
+            return BUS;
         }
-
 }
 

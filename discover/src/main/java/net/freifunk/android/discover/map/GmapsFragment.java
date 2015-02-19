@@ -1,7 +1,8 @@
 /*
  * GmapsFragment.java
  *
- * Copyright (C) 2014  Philipp Dreimann
+ * Original work Copyright (C) 2014  Philipp Dreimann
+ * Modified work Copyright (C) 2014  Bjoern Petri
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +19,10 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
-package net.freifunk.android.discover;
+package net.freifunk.android.discover.map;
 
 
-import com.androidmapsextensions.ClusterGroup;
-import com.androidmapsextensions.ClusterOptions;
-import com.androidmapsextensions.ClusterOptionsProvider;
+
 import com.androidmapsextensions.ClusteringSettings;
 import com.androidmapsextensions.GoogleMap;
 import com.androidmapsextensions.Marker;
@@ -31,70 +30,60 @@ import com.androidmapsextensions.MarkerOptions;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 
+import net.freifunk.android.discover.helper.EventBus;
+import net.freifunk.android.discover.R;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.NodeMap;
-import net.freifunk.android.discover.model.MapMaster;
+import net.freifunk.android.discover.model.NodeResult;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.maps.android.clustering.ClusterManager;
+import com.squareup.otto.Subscribe;
 
 
-/**
- * A simple {@link android.support.v4.app.Fragment} subclass.
- *
- */
-public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment implements Observer, GoogleMap.OnMarkerClickListener {
+public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment implements GoogleMap.OnMarkerClickListener {
 
-    public static final String ARG_TYPE = "type_id";
-    public static final String COMMUNITY_TYPE = "type_community";
-    public static final String NODES_TYPE = "type_nodes";
-    private static final String TAG = "GmapsFragment";
+    private static final String TAG = GmapsFragment.class.getName();
+
+
     private SharedPreferences sharedPrefs = null;
-    private HashMap<Marker, Object> markerMap;
     private Callbacks mCallbacks = sDummyCallbacks;
-    private ClusterManager<Node> mClusterManager;
-    private Node clickedClusterItem = null;
+
     private View contents = null;
     private GoogleMap mMap = null;
 
     private static final double[] CLUSTER_SIZES = new double[]{180, 160, 144, 120, 96};
 
 
-    public static GmapsFragment newInstance(String type) {
+    public static GmapsFragment newInstance() {
         GmapsFragment fragment = new GmapsFragment();
         Bundle b = new Bundle();
-        b.putString(ARG_TYPE, type);
-
-        MapMaster.getInstance().addObserver(fragment);
 
         fragment.setArguments(b);
+
         return fragment;
     }
 
     public GmapsFragment() {
         // Required empty public constructor
+
+      //  sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
     }
 
 
@@ -110,23 +99,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-
-        if (getArguments().containsKey(ARG_TYPE)) {
-
-            setupMap();
-
-            String type = (String) getArguments().get(ARG_TYPE);
-            if (type.equals(NODES_TYPE)) {
-
-                for (NodeMap m : MapMaster.getInstance().getMaps()) {
-                    m.setAddedToMap(false);
-                }
-
-                createNodesMap();
-            }
-        }
+        setupMap();
     }
 
 
@@ -134,6 +107,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
     private void setupMap() {
         if (mMap == null) {
             mMap = getExtendedMap();
+
             mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
             ClusteringSettings clusteringSettings = new ClusteringSettings();
@@ -149,49 +123,70 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
             mMap.setMyLocationEnabled(true);
             mMap.setOnMarkerClickListener(this);
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51, 9), 6));
+
+            EventBus.getInstance().register(this);
         }
     }
 
-    @Override
-    public void update(Observable observable, Object data) {
-        createNodesMap();
-    }
+    @Subscribe
+    public void onNodeMapResult(NodeResult nodeResult) {
+        NodeResult.NodeResultType resultType = nodeResult.getResultType();
 
-    private void createNodesMap() {
-
-        MapMaster mapMaster = MapMaster.getInstance();
-
-        boolean onlyOnlineNodes = sharedPrefs.getBoolean("nodes_onlyOnline", false);
-
-        markerMap = new HashMap<Marker, Object>();
-
-        for (NodeMap m : mapMaster.getMaps()) {
-            if (!m.alreadyAddedToMap()) {
-                for(Node n : m.getNodes()) {
-
-                    Marker marker = null;
-
-                    if (m.isActive()) {
-                        if (onlyOnlineNodes == false || n.isOnline()) {
-                            marker = mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
-                            n.setMarker(marker);
-                        }
-                    }
-                    else {
-                        marker = n.getMarker();
-
-                        if (marker != null) {
-                            marker.remove();
-                        }
-                    }
-              }
-
-                m.setAddedToMap(true);
+        if (resultType == NodeResult.NodeResultType.LOAD_NODES || resultType == NodeResult.NodeResultType.UPDATE_NODES) {
+            NodeMap map = nodeResult.getResult();
+            if (map != null) {
+                maintainMarker(map);
             }
         }
     }
 
+    private void maintainMarker(NodeMap m) {
 
+        Lock markerLock = new ReentrantLock();
+
+        //List<Marker> markerList = mMap.getMarkers();
+        boolean onlyOnlineNodes = false; //sharedPrefs.getBoolean("nodes_onlyOnline", false);
+
+        markerLock.lock();
+        try {
+
+            Log.e(TAG, "maintainMarker: amount of Markers: " + m.getNodes().values().size());
+            for (Node n : m.getNodes().values()) {
+                Marker marker;
+
+                if (m.isActive()) {
+                    if (onlyOnlineNodes == false || n.isOnline()) {
+                        marker = n.getMarker();
+                        if (marker != null) {
+/*
+                            if (markerList.contains(marker)) {
+                                marker.setData(n);
+                            } else {
+                            */
+                                marker = mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+                                n.setMarker(marker);
+                            //}
+
+                        } else {
+                            marker = mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
+                            n.setMarker(marker);
+                        }
+                    }
+                } else {
+                    marker = n.getMarker();
+
+                    if (marker != null) {
+                        marker.remove();
+                        n.setMarker(null);
+                    }
+                }
+            }
+        }
+        finally {
+            markerLock.unlock();
+        }
+
+    }
 
 
     /**
@@ -253,9 +248,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
 
             if (marker != null && marker.getData() != null) {
 
-                Node n = (Node) marker.getData();
-                
-                TableLayout table = (TableLayout) v.findViewById(R.id.tableLayout);
+                Node n = marker.getData();
 
                 TableRow rowLastUpd = (TableRow) v.findViewById(R.id.tablerow_lastupd);
                 TableRow rowHardware = (TableRow) v.findViewById(R.id.tablerow_hardware);
@@ -285,7 +278,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
                 tvMapName.setText(n.getMapname());
 
                 if (lastUpdate > 0) {
-                    SimpleDateFormat sdf = null;
+                    SimpleDateFormat sdf;
 
                     if ((new Date().getTime() - lastUpdate)  > (60 * 60 *24 * 1000)) {
                         sdf = new SimpleDateFormat("dd.MM.yyyy H:mm");

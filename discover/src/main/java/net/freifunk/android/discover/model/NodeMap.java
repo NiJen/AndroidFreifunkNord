@@ -1,49 +1,63 @@
+/*
+ * NodeMap.java
+ *
+ * Copyright (C) 2015 Bjoern Petri
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ */
+
 package net.freifunk.android.discover.model;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.RetryPolicy;
 import com.android.volley.toolbox.JsonObjectRequest;
 
-import net.freifunk.android.discover.DatabaseHelper;
-import net.freifunk.android.discover.RequestQueueHelper;
+import net.freifunk.android.discover.helper.RequestQueue;
+import net.freifunk.android.discover.async.LoadNode;
+import net.freifunk.android.discover.async.NodesResponse;
+import net.freifunk.android.discover.async.SaveNode;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.HashMap;
 
-/**
- * Created by bjoern petri on 12/4/14.
- */
-public class NodeMap implements Parcelable {
+public class NodeMap implements  Parcelable{
 
-    private static final String TAG = "NodeMap";
+    private static final String TAG = NodeMap.class.getName();
 
     Context context;
     String mapName;
     String mapUrl;
     boolean active;
 
-    CopyOnWriteArrayList<Node> nodeList;
-    boolean addedToMap;
+    HashMap<String, Node> nodeList;
 
     public NodeMap(String name, String mapUrl, boolean active) {
         this.mapName = name;
         this.mapUrl = mapUrl;
-        this.nodeList = new CopyOnWriteArrayList<Node>();
+        this.nodeList = new HashMap<String, Node>();
         this.active = active;
-        this.addedToMap = false;
     }
-
 
     private NodeMap(Parcel parcel) {
         this.mapName = parcel.readString();
         this.mapUrl = parcel.readString();
+        this.active = (parcel.readInt() == 1)  ? true : false;
     }
 
     public String getMapName() {
@@ -58,24 +72,15 @@ public class NodeMap implements Parcelable {
         this.mapUrl = mapUrl;
     }
 
-    public CopyOnWriteArrayList<Node> getNodes() {
+    public HashMap<String, Node> getNodes() {
         return this.nodeList;
     }
 
+
     public void addNodes(ArrayList<Node> nodeList) {
-        for(Node node : nodeList) {
-            if(!this.nodeList.contains(node)) {
-                this.nodeList.add(node);
-            }
+        for (Node node : nodeList) {
+            this.nodeList.put(node.getName(), node);
         }
-    }
-
-    public void setAddedToMap(boolean addedToMap) {
-        this.addedToMap = addedToMap;
-    }
-
-    public boolean alreadyAddedToMap() {
-        return this.addedToMap;
     }
 
 
@@ -88,44 +93,20 @@ public class NodeMap implements Parcelable {
     }
 
     public void loadNodes() {
-        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
+        new LoadNode().executeAsyncTask(new NodeMap[]{this});
+    }
 
-        /* load from database */
-        LoadNodesDatabaseTask loadNodesDatabaseTask = new LoadNodesDatabaseTask();
-        loadNodesDatabaseTask.execute(new NodeMap[] { this });
+    public void saveNodes() {
+        new SaveNode().executeAsyncTask(new NodeMap[]{this});
+    }
 
 
-        // TODO: can we reference to the Map from within the Callback, similar to
-        // the nodeList ?
+    public void updateNodes() {
 
+        RequestQueue requestHelper = RequestQueue.getInstance();
 
         /* load from web */
-        NodesResponse nr = new NodesResponse(this, new NodesResponse.Callbacks() {
-            @Override
-            public void onNodeAvailable(Node node) {
-                if (node.getGeo() != null && !nodeList.contains(node)) {
-                    nodeList.add(node);
-                }
-            }
-
-            @Override
-            public void onResponseFinished(NodeMap map) {
-                try {
-                    MapMaster mapMaster = MapMaster.getInstance();
-                    Log.d(TAG, "Finished loading + " + map.getMapName());
-                    mapMaster.updateMap(map);
-
-                    SaveNodesDatabaseTask saveNodesDatabaseTask = new SaveNodesDatabaseTask();
-                    saveNodesDatabaseTask.execute(new NodeMap[]{map});
-                }
-                finally {
-
-                    Log.d(TAG, "NodeResponse for  + " + map.getMapName() + " finished.");
-                    // we set the RequestDone when the saveNodesDatabaseTask has been done
-                }
-            }
-        });
-
+        NodesResponse nr = new NodesResponse(this);
         JsonObjectRequest request = new JsonObjectRequest(this.mapUrl, null, nr, nr);
 
         RetryPolicy policy = new DefaultRetryPolicy(30000, 5, DefaultRetryPolicy.DEFAULT_BACKOFF_MULT);
@@ -134,104 +115,24 @@ public class NodeMap implements Parcelable {
         requestHelper.add(request);
     }
 
-
-
-    @SuppressWarnings("StringBufferReplaceableByString")
-    public String details() {
-        final StringBuffer sb = new StringBuffer("MapMaster{");
-        sb.append("name='").append(mapName).append('\'');
-        sb.append(", mapUrl='").append(mapUrl).append('\'');
-        sb.append('}');
-        return sb.toString();
-    }
-
     @Override
     public int describeContents() {
         return 0;
     }
-
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(mapName);
         parcel.writeString(mapUrl);
+        parcel.writeInt((active == true) ? 1 : 0);
     }
-
     // this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
     public static final Parcelable.Creator<NodeMap> CREATOR = new Parcelable.Creator<NodeMap>() {
         public NodeMap createFromParcel(Parcel in) {
             return new NodeMap(in);
         }
-
         public NodeMap[] newArray(int size) {
             return new NodeMap[size];
         }
     };
-
-
-
-    private class LoadNodesDatabaseTask extends AsyncTask<NodeMap, Object, NodeMap[]> {
-
-        @Override
-        protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
-            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(NodeMap.this.context);
-
-            for (NodeMap nodeMap : nodeMaps) {
-                ArrayList<Node> nodeList = (ArrayList<Node>) databaseHelper.getAllNodesForMap(nodeMap.getMapName());
-                nodeMap.addNodes(nodeList);
-            }
-
-            return nodeMaps;
-        }
-
-        @Override
-        protected void onPostExecute(NodeMap[] nodeMaps) {
-            MapMaster mapMaster = MapMaster.getInstance();
-            for (NodeMap nodeMap : nodeMaps) {
-                int size = nodeMap.getNodes().size();
-                Log.e(TAG, "Finished database loading  " + nodeMap.getMapName() + " (" + size + " entries)");
-
-                // only update if there are nodes available
-                if (size > 0) {
-                    mapMaster.updateMap(nodeMap);
-                }
-                else {
-                    Log.d(TAG, "no entries found for " + nodeMap.getMapName() + " in database ");
-                }
-
-            }
-        }
-    }
-
-
-
-    private class SaveNodesDatabaseTask extends AsyncTask<NodeMap, Object, NodeMap[]> {
-
-        @Override
-        protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
-            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(NodeMap.this.context);
-
-            for (NodeMap nodeMap : nodeMaps) {
-                CopyOnWriteArrayList<Node> nodeList = nodeMap.getNodes();
-
-                for (Node node : nodeList) {
-                    databaseHelper.addNode(node);
-                }
-            }
-
-            return nodeMaps;
-        }
-
-        @Override
-        protected void onPostExecute(NodeMap[] nodeMaps) {
-            RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
-
-            for (NodeMap nodeMap : nodeMaps) {
-                Log.d(TAG, "Finished saving + " + nodeMap.getMapName());
-            }
-
-            requestHelper.RequestDone();
-
-        }
-    }
 
 }

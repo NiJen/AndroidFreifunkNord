@@ -1,5 +1,5 @@
 /*
- * NodeMapComparator.java
+ * NodeResult.java
  *
  * Copyright (C) 2015 Bjoern Petri
  *
@@ -20,14 +20,42 @@
 
 package net.freifunk.android.discover.model;
 
-import java.util.Comparator;
+import java.util.HashMap;
 
-public class NodeMapComparator implements Comparator<NodeMap> {
+public class NodeResult
+{
+    public enum NodeResultType {LOAD_MAP, UPDATE_MAP, LOAD_NODES, SAVE_NODES, UPDATE_NODES};
 
-        @Override
-        public int compare(NodeMap o1, NodeMap o2) {
-            return o1.getMapName().compareTo(o2.getMapName());
-        }
+    private NodeResultType resultType;
+    private NodeMap map;
+    private HashMap<String, NodeMap> maps;
+
+    public NodeResult(NodeResultType resultType, NodeMap map)
+    {
+        this.resultType = resultType;
+        this.map = map;
+    }
+
+    public NodeResult(NodeResultType resultType, HashMap<String, NodeMap> maps)
+    {
+        this.resultType = resultType;
+        this.maps = maps;
+    }
+
+
+    public NodeResultType getResultType()
+    {
+        return this.resultType;
+    }
+
+    public NodeMap getResult()
+    {
+        return this.map;
+    }
+
+    public HashMap<String, NodeMap> getResults()
+    {
+        return this.maps;
+    }
 
 }
-

@@ -1,7 +1,8 @@
 /*
  * SettingsActivity.java
  *
- * Copyright (C) 2014  Philipp Dreimann
+ * Original work Copyright (C) 2014  Philipp Dreimann
+ * Modified work Copyright (C) 2015  Bjoern Petri
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +23,7 @@ package net.freifunk.android.discover;
 
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -39,25 +35,20 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
-import android.preference.RingtonePreference;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.MenuItem;
 import android.support.v4.app.NavUtils;
-import android.widget.CompoundButton;
-import android.widget.RadioGroup;
 
 
+import net.freifunk.android.discover.helper.Database;
+import net.freifunk.android.discover.helper.EventBus;
 import net.freifunk.android.discover.model.MapMaster;
 import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.NodeMapComparator;
+import net.freifunk.android.discover.model.NodeResult;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -78,7 +69,8 @@ public class SettingsActivity extends PreferenceActivity {
      * shown on tablets.
      */
     private static final boolean ALWAYS_SIMPLE_PREFS = false;
-    private static final String TAG = "SettingsActivity";
+    private static final String TAG = SettingsActivity.class.getName();
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -87,10 +79,7 @@ public class SettingsActivity extends PreferenceActivity {
         addPreferencesFromResource(R.xml.pref_data_sync);
 
         // get data via the key
-        final MapMaster mapMaster = MapMaster.getInstance();
-
-
-        ArrayList<NodeMap> nodeMapArrayList = new ArrayList<NodeMap>(mapMaster.getMaps());
+        ArrayList<NodeMap> nodeMapArrayList = new ArrayList<NodeMap>(MapMaster.getInstance().getMaps().values());
         PreferenceCategory communities = (PreferenceCategory) findPreference("communities");
 
         // sort by Name
@@ -116,16 +105,20 @@ public class SettingsActivity extends PreferenceActivity {
                      @Override
                     public boolean onPreferenceChange(Preference preference, Object newValue) {
 
-                         MapMaster mapMaster = MapMaster.getInstance();
-                         DatabaseHelper db = DatabaseHelper.getInstance(null);
+                         Database db = Database.getInstance(null);
+
                          boolean newActive = newValue.toString().equals("true") ? true : false;
 
                          nm.setActive(newActive);
                          db.addNodeMap(nm);
 
-                         // triggers map update
-                         nm.setAddedToMap(false);
-                         mapMaster.updateMap(nm);
+                         // reload if set to active
+                         if (newActive) {
+                             nm.loadNodes();
+                         }
+                         else {
+                             nm.updateNodes();
+                         }
 
                          return true;
                     }
@@ -145,23 +138,25 @@ public class SettingsActivity extends PreferenceActivity {
                      @Override
                      public boolean onPreferenceChange(Preference preference, Object newValue) {
 
-                         DatabaseHelper db = DatabaseHelper.getInstance(null);
+                         Database db = Database.getInstance(null);
 
-
-
-                         // remove old nodes from node
+                         // remove old nodes from map
                          nm.setActive(false);
-                         nm.setAddedToMap(false);
-                         mapMaster.updateMap(nm);
+                         EventBus.getInstance().post(new NodeResult(NodeResult.NodeResultType.UPDATE_NODES, nm));
 
-                         nm.setMapUrl(newValue.toString());
-                         db.addNodeMap(nm);
+                         // we should probably do this async as well
                          db.deleteAllNodesForMap(nm);
 
                          // load new nodes
-                         nm.setActive(true);
-                         nm.loadNodes();
-                         mapMaster.updateMap(nm);
+                         NodeMap newMap = new NodeMap(nm.getMapName(), (String) newValue, true);
+                         db.addNodeMap(newMap);
+
+                         //HashMap<String, NodeMap> nodeResult = new HashMap<String, NodeMap>(1);
+                         //nodeResult.put(nm.getMapName(), nm);
+
+                         newMap.updateNodes();
+                         //EventBus.getInstance().post(new NodeResult(NodeResult.NodeResultType.LOAD_NODES, nm));
+                         //EventBus.getInstance().post(new NodeResult(NodeResult.NodeResultType.UPDATE_MAP, nodeResult));
 
                          return true;
                      }
@@ -170,7 +165,7 @@ public class SettingsActivity extends PreferenceActivity {
                  communityPreferenceScreen.addPreference(deactivateCommunityPreference);
                  communityPreferenceScreen.addPreference(editCommunityPreference);
 
-                 communities.addPreference((Preference) communityPreferenceScreen);
+                 communities.addPreference(communityPreferenceScreen);
             }
         }
 
@@ -323,4 +318,5 @@ public class SettingsActivity extends PreferenceActivity {
 
         }
     }
+
 }

@@ -1,37 +1,38 @@
-package net.freifunk.android.discover.model;
-
-import android.util.Log;
-
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Observable;
-import java.util.Set;
-
-/**
- * Created by NiJen on 30.04.14.
+/*
+ * MapMaster.java
+ *
+ * Original work Copyright (C) 2014 NiJen
+ * Modified work Copyright (C) 2015 Bjoern Petri
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
  */
 
+package net.freifunk.android.discover.model;
 
-public class MapMaster extends Observable {
+import java.util.HashMap;
 
-   private static MapMaster mInstance;
 
-    private final String TAG = "MapMaster";
-    private final HashMap<String, NodeMap> maps = new HashMap<String, NodeMap>();
+public class MapMaster {
 
+private static MapMaster mInstance;
+
+    private final String TAG = MapMaster.class.getName();
+    private static volatile HashMap<String, NodeMap> maps = null;
 
     private MapMaster() {
-
+        maps = new HashMap<String, NodeMap>(20);
     }
 
     public static synchronized MapMaster getInstance() {
@@ -42,25 +43,13 @@ public class MapMaster extends Observable {
     }
 
 
-    public void updateMap(NodeMap m) {
-
-        // At the moment we assume that a later received map is more up to date
-        maps.put(m.getMapName(), m);
-        update();
+    public void put(String key, NodeMap value) {
+        maps.put(key, value);
     }
 
 
-    public void update() {
-        setChanged();
-        notifyObservers();
-    }
-
-    public Collection<NodeMap> getMaps() {
-        return maps.values();
-    }
-
-    public boolean isEmpty() {
-        return (maps.size() == 0);
+    public HashMap<String, NodeMap> getMaps() {
+        return maps;
     }
 
 }

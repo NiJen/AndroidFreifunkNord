@@ -1,7 +1,8 @@
 /*
  * Main.java
  *
- * Copyright (C) 2014  Philipp Dreimann
+ * Original work Copyright (C) 2014  Philipp Dreimann
+ * Modified work Copyright (C) 2015  Bjoern Petri
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,77 +21,61 @@
 
 package net.freifunk.android.discover;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.StrictMode;
+import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.TextView;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
+
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.squareup.otto.Subscribe;
 
-import net.freifunk.android.discover.model.NodeMap;
-import net.freifunk.android.discover.model.Node;
+import net.freifunk.android.discover.async.LoadNodeMap;
+import net.freifunk.android.discover.async.NodeMapResponse;
+import net.freifunk.android.discover.helper.Database;
+import net.freifunk.android.discover.helper.EventBus;
+import net.freifunk.android.discover.helper.RequestQueue;
+import net.freifunk.android.discover.map.GmapsFragment;
 import net.freifunk.android.discover.model.MapMaster;
+import net.freifunk.android.discover.model.NodeMap;
+import net.freifunk.android.discover.model.NodeResult;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 
 
 public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
 
     private Menu optionsMenu;
-
     private static final int RESULT_SETTINGS = 1;
-    private static final String TAG = "Main";
+    private static final String TAG = Main.class.getName();
 
-    private static HashMap<String, NodeMap> mapList = null;
+    private Handler updateHandler;
+    private Runnable updateTask;
+
+    private static volatile HashMap<String, NodeMap> mapsLoading = null;
+    private static volatile HashMap<String, NodeMap> mapsSaving = null;
+
+    //final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
+    final String URL = "http://localhost:8080/ffdbg/MapUrls.json";
 
     /**
      * Used to store the last screen title. For use in {@link #restoreActionBar()}.
      */
     private CharSequence mTitle;
-    private GmapsFragment mMapFragment;
-    private RequestQueue mRequestQueue;
-
-    private TimerTask updateTask = null;
 
     private static void setDefaultUncaughtExceptionHandler() {
         try {
@@ -106,28 +91,59 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
                 }
             });
         } catch (SecurityException e) {
-            Log.e("EXCEPTION","Could not set the Default Uncaught Exception Handler", e);
+            Log.e("EXCEPTION", "Could not set the Default Uncaught Exception Handler", e);
         }
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setDefaultUncaughtExceptionHandler();
+
         setContentView(R.layout.activity_main);
 
         mTitle = getTitle();
+        updateHandler = new Handler();
+        updateTask = new Runnable() {
+            @Override
+            public void run() {
+                SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                MapMaster mapMaster = MapMaster.getInstance();
+
+                int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));
+
+                for (NodeMap map : mapMaster.getMaps().values()) {
+                    EventBus.getInstance().post(new NodeResult(NodeResult.NodeResultType.LOAD_NODES, map));
+                }
+
+                if (sync_frequency > 0)
+                    updateHandler.postDelayed(updateTask, sync_frequency * 60 * 1000);
+            }
+        };
+
+
+
+
+        mapsLoading = new HashMap<String, NodeMap>(20);
+        mapsSaving = new HashMap<String, NodeMap>(20);
 
         /* initialize singletons */
-        DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
-        RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this);
+        EventBus.getInstance().register(this);
 
-        /* load from database */
-        LoadNodeMapDatabaseTask loadNodeMapsDatabaseTask = new LoadNodeMapDatabaseTask();
-        loadNodeMapsDatabaseTask.execute(new NodeMap[]{});
+        Database database = Database.getInstance(this.getApplicationContext());
+        RequestQueue requestHelper = RequestQueue.getInstance(this);
 
         FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.container, GmapsFragment.newInstance(GmapsFragment.NODES_TYPE)).commit();
-        }
+        fragmentManager.beginTransaction().replace(R.id.container, GmapsFragment.newInstance()).commit();
+
+        new LoadNodeMap().executeAsyncTask();
+    }
+
+    @Override
+    protected void onDestroy() {
+        EventBus.getInstance().unregister(this);
+        super.onDestroy();
+    }
 
 
     private LatLng getLocation() {
@@ -174,13 +190,8 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         getMenuInflater().inflate(R.menu.main, menu);
         restoreActionBar();
 
-        /* check whether requests are already running */
-        if (RequestQueueHelper.getInstance(this).size() > 0) {
-            setRefreshActionButtonState(true);
-        }
-
         return true;
-   }
+    }
 
     public void setRefreshActionButtonState(final boolean refreshing) {
 
@@ -203,32 +214,22 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        switch(id) {
+        switch (id) {
 
             case R.id.action_reload:
-                RequestQueueHelper requestHelper = RequestQueueHelper.getInstance();
-                int queueSize = requestHelper.size();
-
-                if (queueSize == 0 && updateTask != null) {
+                if (mapsSaving.isEmpty() && updateTask != null) {
+                    updateHandler.removeCallbacks(updateTask);
                     updateTask.run();
-                }
-                else {
-                    Log.w(TAG, "No action performed at the moment - QueueSize is " + queueSize);
+                } else {
+                    Log.w(TAG, "No action performed at the moment - QueueSize is " + mapsSaving.size());
                 }
                 break;
 
             case R.id.action_settings:
                 Intent i = new Intent(this, SettingsActivity.class);
-                ArrayList <NodeMap> addyExtras = new ArrayList <NodeMap>();
-
-                for (NodeMap nm : mapList.values()) {
-                    addyExtras.add(nm);
-                }
-
-                i.putParcelableArrayListExtra( "communities", addyExtras );
                 startActivityForResult(i, RESULT_SETTINGS);
                 return true;
-         }
+        }
 
         return super.onOptionsItemSelected(item);
     }
@@ -237,108 +238,65 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
     public void onMarkerClicked(Object o) {
     }
 
-    void updateMaps() {
-        final String URL = "https://raw.githubusercontent.com/NiJen/AndroidFreifunkNord/master/MapUrls.json";
 
-        SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+    @Subscribe
+    public synchronized void onNodeMapResult(NodeResult nodeResult) {
 
+        NodeResult.NodeResultType result = nodeResult.getResultType();
         MapMaster mapMaster = MapMaster.getInstance();
-        final RequestQueueHelper requestHelper = RequestQueueHelper.getInstance(this);
-        final DatabaseHelper databaseHelper = DatabaseHelper.getInstance(this.getApplicationContext());
 
-        boolean sync_wifi = sharedPrefs.getBoolean("sync_wifi", true);
-        int sync_frequency = Integer.parseInt(sharedPrefs.getString("sync_frequency", "0"));
+        /* database loading of map finished */
+        if (result == NodeResult.NodeResultType.LOAD_MAP) {
 
-        if (sync_wifi) {
-            Log.d(TAG, "Performing online update ONLY via wifi, every " + sync_frequency + " minutes");
-        } else {
-            Log.d(TAG, "Performing online update ALWAYS, every " + sync_frequency + " minutes");
-        }
+            for (NodeMap map : nodeResult.getResults().values()) {
+                mapMaster.put(map.getMapName(), map);
 
-        updateTask = new TimerTask() {
-            @Override
-            public void run() {
-
-                /* load from web */
-                requestHelper.add(new JsonObjectRequest(URL, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject jsonObject) {
-                        try {
-                            MapMaster mapMaster = MapMaster.getInstance();
-
-                            Iterator mapkeys = jsonObject.keys();
-                            while (mapkeys.hasNext()) {
-                                String mapName = mapkeys.next().toString();
-                                String mapUrl = jsonObject.getString(mapName);
-
-                                NodeMap m = new NodeMap(mapName, mapUrl, true);
-                                databaseHelper.addNodeMap(m);
-
-                                // only update, if not already found in database
-                                if (!mapList.containsKey(m.getMapName())) {
-                                    m.loadNodes();
-                                }
-                            }
-                        } catch (JSONException e) {
-                            Log.e(TAG, e.toString());
-                        }
-                        finally {
-                            requestHelper.RequestDone();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError volleyError) {
-                        Log.e(TAG, volleyError.toString());
-                        requestHelper.RequestDone();
-                    }
-                }));
-
-            }
-        };
-
-
-        Timer timer = new Timer();
-
-        if (sync_frequency > 0) {
-            timer.schedule(updateTask, 0, (sync_frequency * 60 * 1000));
-        }
-        else {
-            timer.schedule(updateTask, 0);
-        }
-
-    }
-
-
-    private class LoadNodeMapDatabaseTask extends AsyncTask<NodeMap, Object, NodeMap[]> {
-
-        @Override
-        protected NodeMap[] doInBackground(NodeMap[] nodeMaps) {
-            DatabaseHelper databaseHelper = DatabaseHelper.getInstance(getApplicationContext());
-
-            mapList = new HashMap<String, NodeMap>();
-
-            for (NodeMap nm : databaseHelper.getAllNodeMaps().values()) {
-                mapList.put(nm.getMapName(), nm);
-            }
-
-            /* load from database */
-            for (NodeMap map : mapList.values()) {
                 if (map.isActive()) {
+                    mapsLoading.put(map.getMapName(), map);
                     map.loadNodes();
                 }
             }
-
-            return nodeMaps;
         }
+        /* web loading of map finished */
+        else if (result == NodeResult.NodeResultType.UPDATE_MAP) {
+            for (NodeMap map : nodeResult.getResults().values()) {
+                if (map.isActive()) {
+                    mapsSaving.put(map.getMapName(), map);
+                    map.updateNodes();
+                }
+            }
+        }
+        /* database loading of nodes finished */
+        else if (result == NodeResult.NodeResultType.LOAD_NODES) {
+            NodeMap map = nodeResult.getResult();
 
-        @Override
-        protected void onPostExecute(NodeMap[] nodeMaps) {
+            if (mapsLoading.containsValue(map)) {
+                mapsLoading.remove(map.getMapName());
 
-            updateMaps();
+                if (mapsLoading.isEmpty()) {
+                    setRefreshActionButtonState(true);
+                    RequestQueue requestHelper = RequestQueue.getInstance();
+
+                    /* load from web */
+                    NodeMapResponse nr = new NodeMapResponse(mapMaster.getMaps());
+                    JsonObjectRequest request = new JsonObjectRequest(URL, null, nr, nr);
+
+                    requestHelper.add(request);
+                }
+            }
+        }
+        /* web loading of nodes finished */
+        else if (result == NodeResult.NodeResultType.UPDATE_NODES) {
+            NodeMap map = nodeResult.getResult();
+            map.saveNodes();
+        }
+        /* database saving of nodes finished */
+        else if (result == NodeResult.NodeResultType.SAVE_NODES) {
+            mapsSaving.remove(nodeResult.getResult().getMapName());
+
+            if (mapsSaving.isEmpty()) {
+                setRefreshActionButtonState(false);
+            }
         }
     }
-
-
 }
-
