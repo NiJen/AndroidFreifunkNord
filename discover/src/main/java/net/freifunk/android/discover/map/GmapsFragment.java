@@ -22,6 +22,17 @@
 package net.freifunk.android.discover.map;
 
 
+import android.annotation.TargetApi;
+import android.os.AsyncTask;
+import android.os.Build;
+import android.os.Handler;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+
+import com.androidmapsextensions.GoogleMap;
+import com.androidmapsextensions.SupportMapFragment;
 
 import com.androidmapsextensions.ClusteringSettings;
 import com.androidmapsextensions.GoogleMap;
@@ -38,18 +49,25 @@ import android.widget.ImageView;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.androidmapsextensions.SupportMapFragment;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 
+import net.freifunk.android.discover.helper.Database;
 import net.freifunk.android.discover.helper.EventBus;
 import net.freifunk.android.discover.R;
 import net.freifunk.android.discover.model.Node;
 import net.freifunk.android.discover.model.NodeMap;
 import net.freifunk.android.discover.model.NodeResult;
 
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,55 +75,63 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.squareup.otto.Subscribe;
 
 
-public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment implements GoogleMap.OnMarkerClickListener {
+public class GmapsFragment extends Fragment implements GoogleMap.OnMarkerClickListener {
 
     private static final String TAG = GmapsFragment.class.getName();
 
+    private SupportMapFragment mapFragment;
+    protected GoogleMap mMap;
 
     private SharedPreferences sharedPrefs = null;
     private Callbacks mCallbacks = sDummyCallbacks;
-
-    private View contents = null;
-    private GoogleMap mMap = null;
-
-
-
-    public static GmapsFragment newInstance() {
-        GmapsFragment fragment = new GmapsFragment();
-        Bundle b = new Bundle();
-
-        fragment.setArguments(b);
-
-        return fragment;
-    }
-
-    public GmapsFragment() {
-        // Required empty public constructor
-
-      //  sharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-    }
-
+    private HashMap<String,Node> allNodes;
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        contents = getLayoutInflater(savedInstanceState).inflate(R.layout.info_window, null);
-
-        return super.onCreateView(inflater, container, savedInstanceState);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.activity_main, container, false);
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        setupMap();
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        createMapFragmentIfNeeded();
+
+        allNodes = new HashMap<String,Node>();
+
+        EventBus.getInstance().register(this);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        setUpMapIfNeeded();
+    }
+
+
+    @Override
+    public void onDestroy() {
+        EventBus.getInstance().unregister(this);
+        super.onDestroy();
+    }
+
+    private void createMapFragmentIfNeeded() {
+        FragmentManager fm = getChildFragmentManager();
+        mapFragment = (SupportMapFragment) fm.findFragmentById(R.id.container);
+        if (mapFragment == null) {
+            mapFragment = createMapFragment();
+            FragmentTransaction tx = fm.beginTransaction();
+            tx.add(R.id.container, mapFragment);
+            tx.commit();
+        }
+    }
+
+    protected SupportMapFragment createMapFragment() {
+        return SupportMapFragment.newInstance();
+    }
 
 
     private void setupMap() {
-        if (mMap == null) {
-            mMap = getExtendedMap();
 
             mMap.setInfoWindowAdapter(new CustomInfoWindowAdapter());
 
@@ -113,7 +139,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
             clusteringSettings.addMarkersDynamically(true);
 
             clusteringSettings.clusterOptionsProvider(new GmapsClusterOptionsProvider(getResources()));
-            clusteringSettings.addMarkersDynamically(true);
+
             clusteringSettings.clusterSize(200);
             mMap.setClustering(clusteringSettings);
 
@@ -121,8 +147,14 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
             mMap.setOnMarkerClickListener(this);
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(51, 9), 6));
 
-            EventBus.getInstance().register(this);
+    }
 
+    private void setUpMapIfNeeded() {
+        if (mMap== null) {
+            mMap = mapFragment.getExtendedMap();
+            if (mMap != null) {
+                setupMap();
+            }
         }
     }
 
@@ -133,58 +165,11 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
         if (resultType == NodeResult.NodeResultType.LOAD_NODES || resultType == NodeResult.NodeResultType.UPDATE_NODES) {
             NodeMap map = nodeResult.getResult();
             if (map != null) {
-                maintainMarker(map);
+                new UpdateMarker().executeAsyncTask(new NodeMap[]{map});
             }
         }
     }
 
-    private void maintainMarker(NodeMap m) {
-
-        Lock markerLock = new ReentrantLock();
-
-        //List<Marker> markerList = mMap.getMarkers();
-        boolean onlyOnlineNodes = false; //sharedPrefs.getBoolean("nodes_onlyOnline", false);
-
-        markerLock.lock();
-        try {
-
-            Log.e(TAG, "maintainMarker: amount of Markers: " + m.getNodes().values().size());
-            for (Node n : m.getNodes().values()) {
-                Marker marker;
-
-                if (m.isActive()) {
-                    if (onlyOnlineNodes == false || n.isOnline()) {
-                        marker = n.getMarker();
-                        if (marker != null) {
-/*
-                            if (markerList.contains(marker)) {
-                                marker.setData(n);
-                            } else {
-                            */
-                                marker = mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
-                                n.setMarker(marker);
-                            //}
-
-                        } else {
-                            marker = mMap.addMarker(new MarkerOptions().position(n.getPosition()).title(n.getName()).data(n));
-                            n.setMarker(marker);
-                        }
-                    }
-                } else {
-                    marker = n.getMarker();
-
-                    if (marker != null) {
-                        marker.remove();
-                        n.setMarker(null);
-                    }
-                }
-            }
-        }
-        finally {
-            markerLock.unlock();
-        }
-
-    }
 
 
     /**
@@ -241,8 +226,7 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
 
         @Override
         public View getInfoContents(Marker marker) {
-            View v = contents;
-
+             View v = getActivity().getLayoutInflater().inflate(R.layout.info_window, null);
 
             if (marker != null && marker.getData() != null) {
 
@@ -265,8 +249,8 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
                 int uptime = n.getUptime();
                 double loadAvg = n.getLoadavg();
 
-                ImageView ivOnline = (ImageView) v.findViewById(R.id.iv_online);
-                ivOnline.setImageResource(n.isOnline() ? R.drawable.ic_action_network_wifi_on : R.drawable.ic_action_network_wifi_off);
+               ImageView ivOnline = (ImageView) v.findViewById(R.id.iv_online);
+               ivOnline.setImageResource(n.isOnline() ? R.drawable.ic_action_network_wifi_on : R.drawable.ic_action_network_wifi_off);
 
                 TextView tvName = (TextView) v.findViewById(R.id.tv_name);
                 String tvNameStr =  n.getName();
@@ -355,9 +339,79 @@ public class GmapsFragment extends com.androidmapsextensions.SupportMapFragment 
                 return null;
             }
 
-            return contents;
+            return v;
         }
 
 
     }
+
+    private class UpdateMarker extends AsyncTask<NodeMap, Void, HashMap<String, ArrayList<Node>>> {
+
+
+        @Override
+        protected HashMap<String, ArrayList<Node>> doInBackground(NodeMap[] nodeMaps) {
+
+            HashMap<String, ArrayList<Node>> nodeHashMap = new HashMap<String, ArrayList<Node>>();
+            ArrayList<Node> addNodeList = new ArrayList<Node>();
+            ArrayList<Node> rmNodeList = new ArrayList<Node>();
+
+            for (NodeMap nodeMap : nodeMaps) {
+                if (nodeMap.isActive()) {
+                    for (Node node : nodeMap.getNodes().values()) {
+                        if (!allNodes.containsValue(node)) {
+                            addNodeList.add(node);
+                        }
+                    }
+                    Log.d(TAG, "Adding " + addNodeList.size() + " new Nodes for map " + nodeMap.getMapName());
+                }
+                else {
+                    for (Node node : nodeMap.getNodes().values()) {
+                        if (allNodes.containsValue(node)) {
+                            rmNodeList.add(node);
+                        }
+                    }
+                }
+            }
+
+            nodeHashMap.put("add", addNodeList);
+            nodeHashMap.put("remove", rmNodeList);
+
+            return nodeHashMap;
+        }
+
+
+        @Override
+        protected void onPostExecute(HashMap<String, ArrayList<Node>> nodeHasMap) {
+
+            ArrayList<Node> addNodeList = nodeHasMap.get("add");
+            ArrayList<Node> rmNodeList = nodeHasMap.get("remove");
+
+            for (Node node : addNodeList) {
+                Marker marker = mMap.addMarker(new MarkerOptions().position(node.getPosition()).title(node.getName()).data(node));
+                node.setMarker(marker);
+                allNodes.put(node.getName(), node);
+            }
+
+            for (Node node : rmNodeList) {
+                Marker marker = node.getMarker();
+
+                if (marker != null) {
+                    marker.remove();
+                    node.setMarker(null);
+                }
+
+                allNodes.remove(node.getName());
+            }
+        }
+
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB) // API 11
+        public void executeAsyncTask(NodeMap[] params) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                this.executeOnExecutor(THREAD_POOL_EXECUTOR, params);
+            } else {
+                super.execute(params);
+            }
+        }
+    }
+
 }

@@ -32,6 +32,7 @@ import android.os.Handler;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -131,9 +132,19 @@ public class Main extends ActionBarActivity implements GmapsFragment.Callbacks {
         Database database = Database.getInstance(this.getApplicationContext());
         RequestQueue requestHelper = RequestQueue.getInstance(this);
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.beginTransaction().replace(R.id.container, GmapsFragment.newInstance()).commit();
 
+        if (savedInstanceState == null) {
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction tx = fm.beginTransaction();
+            tx.replace(R.id.container, new GmapsFragment());
+            tx.commit();
+        }
+
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
         new LoadNodeMap().executeAsyncTask();
     }
 
