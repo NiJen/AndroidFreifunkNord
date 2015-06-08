@@ -1,6 +1,6 @@
 {
 	"Flensburg" : "http://map.freifunk-flensburg.de/nodes.json",
-	"Hamburg" : "http://graph.hamburg.freifunk.net/nodes.json",
+	"Hamburg" : "https://graph.hamburg.freifunk.net/nodes.json",
 	"Kiel" : "http://map.freifunk.in-kiel.de/json/nodes.json",
 	"Lübeck" : "http://map.luebeck.freifunk.net/nodes.json",
 	"Münster" : "https://freifunk-muenster.de/map/nodes.json",
