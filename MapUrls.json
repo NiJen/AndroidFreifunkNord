@@ -17,7 +17,7 @@
 	"Bielefeld" : "http://map.freifunk-bielefeld.de/nodes.json",
 	"Braunschweig" : "http://map.freifunk-bs.de/nodes.json",
 	"Ehinngen" : "http://map.freifunk-ehingen.de/nodes.json",
-	"Fulda" : "http://map.freifunk-fulda.de/nodes.json",
+	"Fulda" : "https://meshviewer.fulda.freifunk.net/data/nodes.json",
 	"Mainz" : "http://map.freifunk-mainz.de/nodes.json",
 	"München" : "http://map.freifunk-muenchen.de/nodes.json",
 	"Rhein Neckar" : "http://map.freifunk-rhein-neckar.de/nodes.json",
