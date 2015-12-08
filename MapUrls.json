@@ -30,5 +30,6 @@
 	"Magdeburg" : "http://map.md.freifunk.net/nodes.json",
 	"Ostholstein" : "http://ostholstein.freifunk.net/map/nodes.json",
 	"Gütersloh" : "http://stats.guetersloh.freifunk.net/map/nodes.json",
-	"Mayen Koblenz" : "http://status.freifunk-myk.de/nodes.json"
+	"Mayen Koblenz" : "http://status.freifunk-myk.de/nodes.json",
+	"Südpfalz" : "https://freifunk-suedpfalz.de/karte/nodes.json"
 }
